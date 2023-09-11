@@ -14,7 +14,8 @@ import {
   Icon,
   VStack
 } from '@ijstech/components';
-import { containerStyle, buttonStyle, resultPnlStyle, quizWrapperStyle } from './index.css';
+import { pagesMenuStyle } from './index.css';
+import { Tutorial, Page } from './interface'
 const Theme = Styles.Theme.ThemeVars;
 
 interface ScomPagesMenuElement extends ControlElement {
