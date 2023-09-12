@@ -1,8 +1,12 @@
 import { Module, customModule, Container } from '@ijstech/components';
 import assets from '@modules/assets';
+import ScomPagesMenu from '@scom/scom-pages-menu'
+import { data } from './data'
 
 @customModule
 export default class Module1 extends Module {
+
+    private menu: ScomPagesMenu;
 
     constructor(parent?: Container, options?: any) {
         super(parent, options);
@@ -13,8 +17,10 @@ export default class Module1 extends Module {
     }
 
     render() {
-        return <i-vstack margin={{ left: '1rem', top: '1rem' }} horizontalAlignment='center' position='relative'>
-            
-        </i-vstack>
+        return <i-panel>
+
+            <i-scom-pages-menu id="menu" data={data}></i-scom-pages-menu>
+
+        </i-panel>
     }
 }

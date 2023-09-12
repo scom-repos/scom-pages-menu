@@ -7,156 +7,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.resultPnlStyle = exports.buttonStyle = exports.containerStyle = exports.quizWrapperStyle = void 0;
+    exports.pagesMenuStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
-    exports.quizWrapperStyle = components_1.Styles.style({
-        overflow: 'auto'
-    });
-    exports.containerStyle = components_1.Styles.style({
-        // overflow: 'hidden',
-        margin: '0 auto',
-        padding: '1rem 1rem',
-        $nest: {
-            '&.answer': {
-                transition: 'filter 0.3s',
-                cursor: 'pointer',
-                $nest: {
-                    '&:hover': {
-                        filter: 'brightness(0.95)'
-                    },
-                    '.answer-label-inner': {
-                        position: 'absolute',
-                        top: '-14px',
-                        opacity: 0,
-                        border: `1.5px solid var(--colors-primary-main)`,
-                        borderRadius: '0.25rem',
-                        padding: '0.25rem 1.25rem !important'
-                    },
-                    '.answer-label-outer': {
-                        position: 'absolute',
-                        top: '-14px',
-                        opacity: 0,
-                        border: `1.5px solid var(--colors-primary-main)`,
-                        borderRadius: '0.25rem',
-                        padding: '0.25rem 1.25rem !important'
-                    },
-                    '&.selected': {
-                        $nest: {
-                            '.inner-container': {
-                                border: `1.5px solid var(--colors-primary-main)`,
-                                borderRadius: '0.25rem',
-                                padding: '1rem 1rem !important'
-                            },
-                            '.answer-icon': {
-                                opacity: 1
-                            },
-                            '.answer-label-inner': {
-                                opacity: 1,
-                                border: `1.5px solid var(--colors-primary-main)`,
-                                // color: `var(--colors-primary-main) !important`
-                            }
-                        }
-                    },
-                    '&.selected-correct': {
-                        $nest: {
-                            '.inner-container': {
-                                border: `1.5px solid var(--colors-success-main)`,
-                                borderRadius: '0.25rem',
-                                padding: '1rem 1rem !important'
-                            },
-                            '.answer-icon': {
-                                opacity: 1
-                            },
-                            '.answer-label-inner': {
-                                opacity: 1,
-                                border: `1.5px solid var(--colors-success-main)`,
-                                // color: `var(--colors-success-main) !important`
-                            }
-                        }
-                    },
-                    '&.selected-incorrect': {
-                        $nest: {
-                            '.inner-container': {
-                                border: `1.5px solid var(--colors-error-main)`,
-                                borderRadius: '0.25rem',
-                                padding: '1rem 1rem !important'
-                            },
-                            '.answer-icon': {
-                                opacity: 1
-                            },
-                            '.answer-label-inner': {
-                                opacity: 1,
-                                border: `1.5px solid var(--colors-error-main)`,
-                                // color: `var(--colors-error-main) !important`
-                            }
-                        }
-                    },
-                    '&.show-correct': {
-                        zIndex: 15,
-                        border: `1.5px solid var(--colors-success-main)`,
-                        borderRadius: '0.25rem',
-                        padding: '1.5rem 1rem !important',
-                        overflow: 'visible',
-                        $nest: {
-                            '.inner-container': {},
-                            '.answer-icon': {
-                                opacity: 1
-                            },
-                            '.answer-label-outer': {
-                                opacity: 1,
-                                border: `1.5px solid var(--colors-success-main)`,
-                                // color: `var(--colors-error-main) !important`
-                            }
-                        }
-                    }
-                }
-            },
-            '.answer-icon': {
-                opacity: 0,
-                border: '1px solid #fff',
-                borderRadius: '50%',
-                transition: 'opacity 0.3s',
-            },
-            '&:hover': {
-                $nest: {
-                    '.answer-icon': {
-                        opacity: 1
-                    }
-                }
-            },
-        }
-    });
-    exports.buttonStyle = components_1.Styles.style({
-        padding: '1rem 0.5rem',
-        border: '1px solid var(--divider)',
-        $nest: {
-            '&:hover': {
-                filter: 'brightness(0.85)'
-            },
-            '> i-icon:hover': {
-                fill: `${Theme.colors.primary.contrastText} !important`
-            },
-            '&.disabled-btn': {
-                cursor: 'no-drop !important',
-                filter: 'brightness(0.85)'
-            }
-        }
-    });
-    exports.resultPnlStyle = components_1.Styles.style({
-        padding: '1rem 1.5rem',
-        borderRadius: '0.25rem',
-        $nest: {
-            '&.unanswered': {
-                border: '1px solid var(--divider)',
-            },
-            '&.correct': {
-                border: '1px solid var(--colors-success-main)',
-            },
-            '&.incorrect': {
-                border: '1px solid var(--colors-error-main)',
-            }
-        }
-    });
+    exports.pagesMenuStyle = components_1.Styles.style({});
+});
+define("@scom/scom-pages-menu/interface.ts", ["require", "exports"], function (require, exports) {
+    "use strict";
+    Object.defineProperty(exports, "__esModule", { value: true });
 });
 define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components"], function (require, exports, components_2) {
     "use strict";
@@ -171,12 +28,45 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components"], f
         constructor(parent, options) {
             super(parent, options);
         }
+        get data() {
+            return this._data;
+        }
         init() {
             super.init();
+            const data = this.getAttribute('data', true);
+            this._data = data;
+            this.updateMenu(this._data);
+        }
+        onMenuClicked(cid) {
+            console.log(`clicked on ${cid}`);
+        }
+        renderTreeNode(page, node) {
+            node.caption = page.name;
+            node.collapsible = true;
+            if (page.cid)
+                node.onClick = () => this.onMenuClicked(page.cid);
+            if (page.pages) {
+                page.pages.map((child) => {
+                    const newNode = new components_2.TreeNode();
+                    node.appendNode(newNode);
+                    this.renderTreeNode(child, newNode);
+                });
+            }
+        }
+        renderTree(data) {
+            const treeElm = new components_2.TreeView(this.pnlPagesMenu);
+            data.pages.map((page) => {
+                const node = treeElm.add();
+                this.renderTreeNode(page, node);
+            });
+        }
+        updateMenu(value) {
+            this._data = value;
+            this.renderTree(this._data);
         }
         render() {
-            return (this.$render("i-vstack", { id: "pnlPagesMenu", minHeight: 25 },
-                this.$render("i-label", { caption: "INIT" })));
+            return (this.$render("i-panel", { id: "pnlPagesMenu", minHeight: 25 },
+                this.$render("i-tree-view", { id: "treeView" })));
         }
     };
     ScomPagesMenu = __decorate([

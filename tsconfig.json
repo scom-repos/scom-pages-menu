@@ -15,6 +15,6 @@
       "@scom-pages-menu/*": ["src/*"]
     }
   },
-  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "include": ["src/**/*.ts", "src/**/*.tsx", "test/modules/module1/data.ts"],
   "exclude": ["node_modules"]
 }

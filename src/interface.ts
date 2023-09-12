@@ -1,10 +1,10 @@
-export interface Page {
+export interface IPageData {
   name: string;
   cid?: string;
   url?: string;
-  pages?: Page[];
+  pages?: IPageData[];
 }
 
-export interface Tutorial {
-  pages: Page[]
+export interface IPagesMenu {
+  pages: IPageData[]
 }
