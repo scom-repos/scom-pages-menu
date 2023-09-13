@@ -1,10 +1,14 @@
 /// <amd-module name="@scom/scom-pages-menu/index.css.ts" />
 declare module "@scom/scom-pages-menu/index.css.ts" {
     export const pagesMenuStyle: string;
+    export const menuBtnStyle: string;
+    export const menuCardStyle: string;
+    export const menuStyle: string;
 }
 /// <amd-module name="@scom/scom-pages-menu/interface.ts" />
 declare module "@scom/scom-pages-menu/interface.ts" {
     export interface IPageData {
+        uuid: string;
         name: string;
         cid?: string;
         url?: string;
@@ -14,10 +18,28 @@ declare module "@scom/scom-pages-menu/interface.ts" {
         pages: IPageData[];
     }
 }
+/// <amd-module name="@scom/scom-pages-menu/store.ts" />
+declare module "@scom/scom-pages-menu/store.ts" {
+    import { IPageData, IPagesMenu } from "@scom/scom-pages-menu/interface.ts";
+    export class PagesObject {
+        private _data;
+        get data(): IPagesMenu;
+        set data(value: IPagesMenu);
+        getPage(id: string, currentPage?: IPageData): IPageData | undefined;
+        setPage(id: string, newName?: string, newCid?: string, newPages?: IPageData[], currentPage?: IPageData): boolean;
+        addPage(parentId: string, newPage: IPageData): boolean;
+        deletePage(id: string, currentPage?: IPageData, parent?: IPageData): boolean;
+    }
+    export const pagesObject: PagesObject;
+}
+/// <amd-module name="@scom/scom-pages-menu/utils.ts" />
+declare module "@scom/scom-pages-menu/utils.ts" {
+    export const generateUUID: () => string;
+}
 /// <amd-module name="@scom/scom-pages-menu" />
 declare module "@scom/scom-pages-menu" {
-    import { Module, ControlElement, Container, TreeNode } from '@ijstech/components';
-    import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
+    import { Module, ControlElement, Container } from '@ijstech/components';
+    import { IPagesMenu } from "@scom/scom-pages-menu/interface.ts";
     interface ScomPagesMenuElement extends ControlElement {
         data: IPagesMenu;
     }
@@ -29,16 +51,36 @@ declare module "@scom/scom-pages-menu" {
         }
     }
     export default class ScomPagesMenu extends Module {
-        private _data;
         private pnlPagesMenu;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         get data(): IPagesMenu;
+        private pnlMenu;
+        private draggingPageId;
+        private isEditing;
+        private focusedPageId;
+        private noDataTxt;
         init(): void;
-        onMenuClicked(cid: string): void;
-        renderTreeNode(page: IPageData, node: TreeNode): void;
-        renderTree(data: IPagesMenu): void;
-        updateMenu(value: IPagesMenu): void;
+        private initEventBus;
+        private initEventListener;
+        private initMenuCardEventListener;
+        setfocusCard(uuid: string): void;
+        private getActiveDropLineIdx;
+        private showDropBox;
+        private reorderPage;
+        private setActiveDropLine;
+        renderChildren(parentUUid: string): void;
+        removeChildren(parentUUid: string): void;
+        renderMenu(): void;
+        renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number): any;
+        handleChildren(uuid: string): void;
+        private setCardTitle;
+        private onClickRenameBtn;
+        private onClickConfirmBtn;
+        private onClickCancelBtn;
+        private toggleRenameBtn;
+        private toggleEditor;
+        private goToPage;
         render(): any;
     }
 }
