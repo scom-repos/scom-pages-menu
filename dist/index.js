@@ -353,8 +353,11 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             }
         }
         removeChildren(parentUUid) {
-            const childrenElm = this.pnlMenu.querySelectorAll(`[parentUUid="${parentUUid}"]`);
-            for (const childElm of childrenElm) {
+            const childElms = this.pnlMenu.querySelectorAll(`[parentUUid="${parentUUid}"]`);
+            for (const childElm of childElms) {
+                const grandChildElmExist = this.pnlMenu.querySelector(`[parentUUid="${childElm.getAttribute('uuid')}"]`);
+                if (grandChildElmExist)
+                    this.removeChildren(childElm.getAttribute('uuid'));
                 childElm.remove();
             }
         }
@@ -461,7 +464,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         render() {
             return (this.$render("i-vstack", { id: "menuWrapper", gap: "0.5rem", class: index_css_1.menuBtnStyle, zIndex: 150 },
                 this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center' },
-                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" })),
+                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select", onClick: () => console.log(this.data) })),
                 this.$render("i-vstack", { id: "pnlMenuWrapper", width: 320 },
                     this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
         }

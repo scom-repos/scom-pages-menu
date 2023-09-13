@@ -200,8 +200,10 @@ export default class ScomPagesMenu extends Module {
   }
 
   removeChildren(parentUUid: string) {
-    const childrenElm = this.pnlMenu.querySelectorAll(`[parentUUid="${parentUUid}"]`);
-    for (const childElm of childrenElm) {
+    const childElms = this.pnlMenu.querySelectorAll(`[parentUUid="${parentUUid}"]`);
+    for (const childElm of childElms) {
+      const grandChildElmExist = this.pnlMenu.querySelector(`[parentUUid="${childElm.getAttribute('uuid')}"]`);
+      if (grandChildElmExist) this.removeChildren(childElm.getAttribute('uuid'));
       childElm.remove();
     }
   }
@@ -405,7 +407,8 @@ export default class ScomPagesMenu extends Module {
       <i-vstack id="menuWrapper" gap={"0.5rem"}
         class={menuBtnStyle} zIndex={150}>
         <i-hstack gap={'1rem'} verticalAlignment='center'>
-          <i-label caption={"Pages menu"} font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }} class="prevent-select"></i-label>
+          <i-label caption={"Pages menu"} font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }}
+            class="prevent-select" onClick={() => console.log(this.data)}></i-label>
         </i-hstack>
         <i-vstack id="pnlMenuWrapper" width={320}>
           <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>
