@@ -85,11 +85,11 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
         set data(value) {
             this._data = value;
         }
-        getPage(id, currentPage) {
+        getPage(uuid, currentPage) {
             if (!currentPage) {
                 // Start the search from the top-level menu
                 for (const page of this._data.pages) {
-                    const result = this.getPage(id, page);
+                    const result = this.getPage(uuid, page);
                     if (result) {
                         return result;
                     }
@@ -97,13 +97,13 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
             }
             else {
                 // Check if the current page matches the ID
-                if (currentPage.uuid === id) {
+                if (currentPage.uuid === uuid) {
                     return currentPage;
                 }
                 // If the current page has sub-pages, search within them
                 if (currentPage.pages) {
                     for (const subPage of currentPage.pages) {
-                        const result = this.getPage(id, subPage);
+                        const result = this.getPage(uuid, subPage);
                         if (result) {
                             return result;
                         }
@@ -112,18 +112,18 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
             }
             return undefined; // Page not found
         }
-        setPage(id, newName, newCid, newPages, currentPage) {
+        setPage(uuid, newName, newCid, newPages, currentPage) {
             if (!currentPage) {
                 // Start the search from the top-level menu
                 for (const page of this._data.pages) {
-                    if (this.setPage(id, newName, newCid, newPages, page)) {
+                    if (this.setPage(uuid, newName, newCid, newPages, page)) {
                         return true; // Page found and updated
                     }
                 }
             }
             else {
                 // Check if the current page matches the ID
-                if (currentPage.uuid === id) {
+                if (currentPage.uuid === uuid) {
                     if (newName !== undefined) {
                         currentPage.name = newName;
                     }
@@ -138,7 +138,7 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                 // If the current page has sub-pages, search within them
                 if (currentPage.pages) {
                     for (const subPage of currentPage.pages) {
-                        if (this.setPage(id, newName, newCid, newPages, subPage)) {
+                        if (this.setPage(uuid, newName, newCid, newPages, subPage)) {
                             return true; // Page found and updated
                         }
                     }
@@ -146,33 +146,55 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
             }
             return false; // Page not found
         }
-        addPage(parentId, newPage) {
-            const parent = this.getPage(parentId);
-            if (parent) {
-                if (!parent.pages) {
-                    parent.pages = [];
+        addPage(newPage, parentId, index) {
+            if (parentId) {
+                const parent = this.getPage(parentId);
+                if (parent) {
+                    if (!parent.pages) {
+                        parent.pages = [];
+                    }
+                    if (index !== undefined && index >= 0 && index <= this._data.pages.length)
+                        parent.pages.splice(index, 0, newPage);
+                    else
+                        parent.pages.push(newPage);
+                    return true; // Page added to parent
                 }
-                parent.pages.push(newPage);
+                else {
+                    return false; // Page not found
+                }
+            }
+            else {
+                if (index !== undefined && index >= 0 && index <= this._data.pages.length)
+                    this._data.pages.splice(index, 0, newPage);
+                else
+                    this._data.pages.push(newPage);
                 return true; // Page added to parent
             }
-            return false; // Parent page not found
         }
-        deletePage(id, currentPage, parent) {
+        deletePage(uuid, currentPage, parent) {
             if (!currentPage) {
                 // Start the search from the top-level menu
                 for (let i = 0; i < this._data.pages.length; i++) {
-                    if (this.deletePage(id, this._data.pages[i])) {
+                    if (this.deletePage(uuid, this._data.pages[i])) {
                         return true; // Page found and deleted
                     }
                 }
             }
             else {
                 // Check if the current page matches the ID
-                if (currentPage.uuid === id) {
+                if (currentPage.uuid === uuid) {
                     if (parent && parent.pages) {
-                        const index = parent.pages.findIndex((page) => page.uuid === id);
+                        const index = parent.pages.findIndex((page) => page.uuid === uuid);
                         if (index !== -1) {
                             parent.pages.splice(index, 1); // Remove the page from its parent
+                            return true; // Page found and deleted
+                        }
+                    }
+                    else if (!parent) {
+                        // If there is no parent, it means we are deleting a top-level page
+                        const index = this._data.pages.findIndex((page) => page.uuid === uuid);
+                        if (index !== -1) {
+                            this._data.pages.splice(index, 1); // Remove the top-level page
                             return true; // Page found and deleted
                         }
                     }
@@ -180,13 +202,41 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                 // If the current page has sub-pages, search within them
                 if (currentPage.pages) {
                     for (let i = 0; i < currentPage.pages.length; i++) {
-                        if (this.deletePage(id, currentPage.pages[i], currentPage)) {
+                        if (this.deletePage(uuid, currentPage.pages[i], currentPage)) {
                             return true; // Page found and deleted
                         }
                     }
                 }
             }
             return false; // Page not found
+        }
+        getParent(uuid) {
+            for (const page of this._data.pages) {
+                if (page.uuid === uuid) {
+                    return undefined; // The given id represents a page in the first hierarchy
+                }
+                if (page.pages) {
+                    const subParent = this.findParent(page, uuid);
+                    if (subParent) {
+                        return subParent;
+                    }
+                }
+            }
+            return undefined;
+        }
+        findParent(page, uuid) {
+            for (const _page of page.pages) {
+                if (_page.uuid === uuid) {
+                    return page;
+                }
+                if (_page.pages) {
+                    const subParent = this.findParent(_page, uuid);
+                    if (subParent) {
+                        return subParent;
+                    }
+                }
+            }
+            return undefined; // No parent found
         }
     }
     exports.PagesObject = PagesObject;
@@ -228,11 +278,11 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.initEventBus();
             this.initEventListener();
             const data = this.getAttribute('data', true);
+            this.updatePage = this.getAttribute('updatePage', true);
             store_1.pagesObject.data = data;
             this.renderMenu();
         }
         initEventBus() {
-            // application.EventBus.register(this, EVENT.ON_UPDATE_MENU, async () => this.renderMenu());
         }
         initEventListener() {
             this.addEventListener('dragstart', (event) => {
@@ -241,31 +291,32 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                     event.preventDefault();
                     return;
                 }
-                this.draggingPageId = eventTarget.getAttribute('uuid');
+                this.draggingPageUUid = eventTarget.getAttribute('uuid');
             });
             this.addEventListener('dragend', (event) => {
                 // remove all active drop line
-                if (!this.draggingPageId) {
+                if (!this.draggingPageUUid) {
                     event.preventDefault();
                     return;
                 }
-                const activeLineIdx = this.getActiveDropLineIdx();
-                if (activeLineIdx != -1)
-                    this.reorderPage(this.draggingPageId, activeLineIdx);
+                // const activeLineIdx = this.getActiveDropLineIdx();
+                // if (activeLineIdx != -1)
+                const dropPageUuid = this.getActiveDropLineUuid();
+                this.reorderPage(this.draggingPageUUid, dropPageUuid);
                 this.setfocusCard(this.focusedPageId);
-                this.setActiveDropLine(-1);
-                this.draggingPageId = undefined;
+                this.setActiveDropLine(undefined);
+                this.draggingPageUUid = undefined;
             });
             this.addEventListener('dragover', (event) => {
                 event.preventDefault();
-                if (!this.draggingPageId) {
+                if (!this.draggingPageUUid) {
                     event.preventDefault();
                     return;
                 }
                 this.showDropBox(event.clientX, event.clientY);
             });
             this.addEventListener('drop', (event) => {
-                if (!this.draggingPageId) {
+                if (!this.draggingPageUUid) {
                     event.preventDefault();
                     return;
                 }
@@ -297,14 +348,14 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 }
             }
         }
-        getActiveDropLineIdx() {
+        getActiveDropLineUuid() {
             const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
             for (let i = 0; i < dropLines.length; i++) {
                 if (dropLines[i].classList.contains('active-drop-line')) {
-                    return (i >= dropLines.length - 1) ? i - 1 : i;
+                    return dropLines[i].id.replace('menuDropLine-', '');
                 }
             }
-            return -1;
+            return undefined;
         }
         showDropBox(clientX, clientY) {
             const menuRect = this.pnlMenu.getBoundingClientRect();
@@ -316,19 +367,53 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 if (clientY >= menuCardRect.top && clientY <= menuCardRect.bottom) {
                     const middleLine = menuCardRect.top + menuCardRect.height / 2;
                     // decide show top/bottom box
-                    this.setActiveDropLine((clientY < middleLine) ? i : i + 1);
+                    let uuid;
+                    if (clientY < middleLine) {
+                        if (i == 0)
+                            uuid = 'start';
+                        else
+                            uuid = menuCards[i - 1].getAttribute('uuid');
+                    }
+                    else {
+                        uuid = menuCards[i].getAttribute('uuid');
+                    }
+                    this.setActiveDropLine(uuid);
                     return;
                 }
             }
         }
-        reorderPage(currentPageUUid, newPosition) {
+        reorderPage(dragPageUUid, dropPageUUid) {
+            const dragPage = store_1.pagesObject.getPage(dragPageUUid);
+            const deletePage = store_1.pagesObject.deletePage(dragPageUUid);
+            if (!deletePage)
+                console.error(`Fail to delete the page with uuid: ${dragPageUUid}`);
+            if (dropPageUUid == "start") {
+                store_1.pagesObject.addPage(dragPage, undefined, 0);
+            }
+            else {
+                // drop on a leef node, append to the back of this leef node
+                const dropPageParent = store_1.pagesObject.getParent(dropPageUUid);
+                if (dropPageParent) {
+                    // drop on non first hierarchy 
+                    const dropPageIdx = dropPageParent.pages.findIndex(p => p.uuid == dropPageUUid);
+                    store_1.pagesObject.addPage(dragPage, dropPageParent.uuid, dropPageIdx + 1);
+                    const dragMenuCard = this.pnlMenu.querySelector(`[uuid="${dragPageUUid}"]`).closest("#menuCardWrapper");
+                    dragMenuCard.setAttribute('parentUUid', dropPageUUid);
+                }
+                else {
+                    // drop on first hierarchy
+                    const dropPageIdx = store_1.pagesObject.data.pages.findIndex(p => p.uuid == dropPageUUid);
+                    store_1.pagesObject.addPage(dragPage, undefined, dropPageIdx + 1);
+                }
+            }
+            this.renderMenu();
         }
-        setActiveDropLine(idx) {
+        setActiveDropLine(uuid) {
             const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
             for (const dropLine of dropLines) {
                 dropLine.classList.remove('active-drop-line');
                 dropLine.classList.remove('inactive-drop-line');
-                if (dropLine.id == `menuDropLine-${idx}`) {
+                if (dropLine.id == `menuDropLine-${uuid}`) {
                     dropLine.classList.add('active-drop-line');
                 }
                 else {
@@ -338,6 +423,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         renderChildren(parentUUid) {
             const parentElm = this.pnlMenu.querySelector(`[uuid="${parentUUid}"]`);
+            const parentElmWrapper = parentElm.parentElement;
             const parentData = store_1.pagesObject.getPage(parentUUid);
             if (!parentData)
                 return;
@@ -348,7 +434,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                     const nextLevel = parseInt(parentElm.getAttribute('level'));
                     const childElm = this.renderMenuCard(childrenList[i].uuid, childrenList[i].name, childrenList[i].cid, false, nextLevel + 1);
                     childElm.setAttribute('parentUUid', parentUUid);
-                    parentElm.parentElement.insertBefore(childElm, parentElm.nextSibling);
+                    parentElmWrapper.parentElement.insertBefore(childElm, parentElmWrapper.nextSibling);
                 }
             }
         }
@@ -362,7 +448,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             }
         }
         renderMenu() {
-            var _a;
             this.pnlMenu.clearInnerHTML();
             const items = store_1.pagesObject.data.pages.map((page) => {
                 return {
@@ -377,18 +462,18 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 this.pnlMenu.appendChild(txt);
                 return;
             }
-            const activeElm = document.querySelector('ide-toolbar.active') || document.querySelector('ide-row.active');
-            const activePageId = (_a = activeElm === null || activeElm === void 0 ? void 0 : activeElm.closest('ide-row')) === null || _a === void 0 ? void 0 : _a.id.replace('row-', "");
+            const activePageUUid = "dummy";
             // set the titles here
-            const dropLine = (this.$render("i-panel", { id: `menuDropLine-0`, width: '100%', height: '5px' }));
-            this.pnlMenu.appendChild(dropLine);
+            const firstDropLine = this.renderDropLine('start');
+            this.pnlMenu.appendChild(firstDropLine);
             for (let i = 0; i < items.length; i++) {
-                const isActive = activePageId == items[i].uuid;
-                const menuCard = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0);
-                this.pnlMenu.appendChild(menuCard);
-                const dropLine = (this.$render("i-panel", { id: `menuDropLine-${i + 1}`, width: '100%', height: '5px' }));
-                this.pnlMenu.appendChild(dropLine);
+                const isActive = activePageUUid == items[i].uuid;
+                const menuCardWrapper = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0);
+                this.pnlMenu.appendChild(menuCardWrapper);
             }
+        }
+        renderDropLine(uuid) {
+            return this.$render("i-panel", { id: `menuDropLine-${uuid}`, width: '100%', height: '5px' });
         }
         renderMenuCard(uuid, name, cid, isActive, level) {
             const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => cid ? this.goToPage(cid) : this.handleChildren(uuid) },
@@ -405,7 +490,11 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             menuCard.setAttribute('cid', cid);
             menuCard.setAttribute('level', level);
             this.initMenuCardEventListener(menuCard);
-            return menuCard;
+            const dropLine = this.renderDropLine(uuid);
+            const menuWrapper = (this.$render("i-vstack", { id: "menuCardWrapper" },
+                menuCard,
+                dropLine));
+            return menuWrapper;
         }
         handleChildren(uuid) {
             const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
@@ -456,15 +545,14 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         goToPage(cid) {
             console.log(`Go to ${cid}`);
-            // const parent = this.closest('#editor') || document;
-            // const row = parent.querySelector(`#row-${uuid}`) as PageRow;
-            // row.scrollIntoView();
-            // row.showSection(uuid);
+            // Todo: use callback
+            if (this.updatePage)
+                this.updatePage(cid);
         }
         render() {
             return (this.$render("i-vstack", { id: "menuWrapper", gap: "0.5rem", class: index_css_1.menuBtnStyle, zIndex: 150 },
                 this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center' },
-                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select", onClick: () => console.log(this.data) })),
+                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" })),
                 this.$render("i-vstack", { id: "pnlMenuWrapper", width: 320 },
                     this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
         }

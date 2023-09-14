@@ -1,30 +1,30 @@
 export const data = {
     pages: [
         {
-            uuid: '12345',
+            uuid: 'uuid-1',
             name: "page 1",
             cid: "cid 1"
         },
         {
-            uuid: '22345',
+            uuid: 'uuid-2',
             name: "page 2",
             pages: [
                 {
-                    uuid: '32345',
+                    uuid: 'uuid-2.1',
                     name: "page 2.1",
                     cid: "cid 2.1"
                 },
                 {
-                    uuid: '42345',
+                    uuid: 'uuid-2.2',
                     name: "page 2.2",
                     pages: [
                         {
-                            uuid: '52345',
+                            uuid: 'uuid-2.2.1',
                             name: "page 2.2.1",
                             cid: "cid 2.2.1"
                         },
                         {
-                            uuid: '62345',
+                            uuid: 'uuid-2.2.2',
                             name: "page 2.2.2",
                             cid: "cid 2.2.2"
                         },
@@ -33,16 +33,16 @@ export const data = {
             ]
         },
         {
-            uuid: '72345',
+            uuid: 'uuid-3',
             name: "page 3",
             pages: [
                 {
-                    uuid: '82345',
+                    uuid: 'uuid-3.1',
                     name: "page 3.1",
                     cid: "cid 3.1"
                 },
                 {
-                    uuid: '92345',
+                    uuid: 'uuid-3.2',
                     name: "page 3.2",
                     cid: "cid 3.2"
                 },

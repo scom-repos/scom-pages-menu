@@ -20,8 +20,11 @@ import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
+type UpdatePage = (cid: string) => void;
+
 interface ScomPagesMenuElement extends ControlElement {
-  data: IPagesMenu
+  data: IPagesMenu,
+  updatePage: UpdatePage
 }
 
 declare global {
@@ -35,8 +38,7 @@ declare global {
 @customModule
 @customElements('i-scom-pages-menu')
 export default class ScomPagesMenu extends Module {
-
-  private pnlPagesMenu: Panel;
+  private updatePage: UpdatePage;
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -53,7 +55,7 @@ export default class ScomPagesMenu extends Module {
   }
 
   private pnlMenu: VStack;
-  private draggingPageId: string;
+  private draggingPageUUid: string;
   private isEditing: boolean = false;
   private focusedPageId: string;
 
@@ -64,12 +66,13 @@ export default class ScomPagesMenu extends Module {
     this.initEventBus();
     this.initEventListener();
     const data = this.getAttribute('data', true);
+    this.updatePage = this.getAttribute('updatePage', true);
     pagesObject.data = data;
     this.renderMenu();
   }
 
   private initEventBus() {
-    // application.EventBus.register(this, EVENT.ON_UPDATE_MENU, async () => this.renderMenu());
+    
   }
 
   private initEventListener() {
@@ -79,27 +82,28 @@ export default class ScomPagesMenu extends Module {
         event.preventDefault();
         return;
       }
-      this.draggingPageId = eventTarget.getAttribute('uuid');
+      this.draggingPageUUid = eventTarget.getAttribute('uuid');
     });
 
     this.addEventListener('dragend', (event) => {
       // remove all active drop line
-      if (!this.draggingPageId) {
+      if (!this.draggingPageUUid) {
         event.preventDefault();
         return;
       }
-      const activeLineIdx = this.getActiveDropLineIdx();
-      if (activeLineIdx != -1)
-        this.reorderPage(this.draggingPageId, activeLineIdx);
+      // const activeLineIdx = this.getActiveDropLineIdx();
+      // if (activeLineIdx != -1)
+      const dropPageUuid = this.getActiveDropLineUuid();
+      this.reorderPage(this.draggingPageUUid, dropPageUuid);
 
       this.setfocusCard(this.focusedPageId);
-      this.setActiveDropLine(-1);
-      this.draggingPageId = undefined;
+      this.setActiveDropLine(undefined);
+      this.draggingPageUUid = undefined;
     });
 
     this.addEventListener('dragover', (event) => {
       event.preventDefault();
-      if (!this.draggingPageId) {
+      if (!this.draggingPageUUid) {
         event.preventDefault();
         return;
       }
@@ -107,7 +111,7 @@ export default class ScomPagesMenu extends Module {
     });
 
     this.addEventListener('drop', (event) => {
-      if (!this.draggingPageId) {
+      if (!this.draggingPageUUid) {
         event.preventDefault();
         return;
       }
@@ -140,14 +144,14 @@ export default class ScomPagesMenu extends Module {
     }
   }
 
-  private getActiveDropLineIdx(): number {
+  private getActiveDropLineUuid(): string {
     const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
     for (let i = 0; i < dropLines.length; i++) {
       if (dropLines[i].classList.contains('active-drop-line')) {
-        return (i >= dropLines.length - 1) ? i - 1 : i;
+        return dropLines[i].id.replace('menuDropLine-', '')
       }
     }
-    return -1;
+    return undefined;
   }
 
   private showDropBox(clientX: number, clientY: number) {
@@ -159,22 +163,50 @@ export default class ScomPagesMenu extends Module {
       if (clientY >= menuCardRect.top && clientY <= menuCardRect.bottom) {
         const middleLine = menuCardRect.top + menuCardRect.height / 2;
         // decide show top/bottom box
-        this.setActiveDropLine((clientY < middleLine) ? i : i + 1);
+        let uuid: string;
+        if (clientY < middleLine) {
+          if (i == 0) uuid = 'start';
+          else uuid = menuCards[i - 1].getAttribute('uuid');
+        } else {
+          uuid = menuCards[i].getAttribute('uuid');
+        }
+        this.setActiveDropLine(uuid);
         return;
       }
     }
   }
 
-  private reorderPage(currentPageUUid: string, newPosition: number) {
+  private reorderPage(dragPageUUid: string, dropPageUUid: string) {
+    const dragPage = pagesObject.getPage(dragPageUUid);
+    const deletePage = pagesObject.deletePage(dragPageUUid);
+    if (!deletePage) console.error(`Fail to delete the page with uuid: ${dragPageUUid}`);
 
+    if (dropPageUUid == "start") {
+      pagesObject.addPage(dragPage, undefined, 0)
+    } else {
+      // drop on a leef node, append to the back of this leef node
+      const dropPageParent = pagesObject.getParent(dropPageUUid)
+      if (dropPageParent) {
+        // drop on non first hierarchy 
+        const dropPageIdx = dropPageParent.pages.findIndex(p => p.uuid == dropPageUUid);
+        pagesObject.addPage(dragPage, dropPageParent.uuid, dropPageIdx + 1);
+        const dragMenuCard = this.pnlMenu.querySelector(`[uuid="${dragPageUUid}"]`).closest("#menuCardWrapper");
+        dragMenuCard.setAttribute('parentUUid', dropPageUUid);
+      } else {
+        // drop on first hierarchy
+        const dropPageIdx = pagesObject.data.pages.findIndex(p => p.uuid == dropPageUUid);
+        pagesObject.addPage(dragPage, undefined, dropPageIdx + 1);
+      }
+    }
+    this.renderMenu();
   }
 
-  private setActiveDropLine(idx: number) {
+  private setActiveDropLine(uuid: string) {
     const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
     for (const dropLine of dropLines) {
       dropLine.classList.remove('active-drop-line');
       dropLine.classList.remove('inactive-drop-line');
-      if (dropLine.id == `menuDropLine-${idx}`) {
+      if (dropLine.id == `menuDropLine-${uuid}`) {
         dropLine.classList.add('active-drop-line');
       } else {
         dropLine.classList.add('inactive-drop-line');
@@ -184,6 +216,7 @@ export default class ScomPagesMenu extends Module {
 
   renderChildren(parentUUid: string) {
     const parentElm = this.pnlMenu.querySelector(`[uuid="${parentUUid}"]`);
+    const parentElmWrapper = parentElm.parentElement;
     const parentData = pagesObject.getPage(parentUUid);
     if (!parentData) return;
 
@@ -194,7 +227,7 @@ export default class ScomPagesMenu extends Module {
         const nextLevel = parseInt(parentElm.getAttribute('level'));
         const childElm = this.renderMenuCard(childrenList[i].uuid, childrenList[i].name, childrenList[i].cid, false, nextLevel + 1);
         childElm.setAttribute('parentUUid', parentUUid);
-        parentElm.parentElement.insertBefore(childElm, parentElm.nextSibling);
+        parentElmWrapper.parentElement.insertBefore(childElm, parentElmWrapper.nextSibling);
       }
     }
   }
@@ -237,21 +270,21 @@ export default class ScomPagesMenu extends Module {
       return;
     }
 
-    const activeElm = document.querySelector('ide-toolbar.active') || document.querySelector('ide-row.active');
-    const activePageId = activeElm?.closest('ide-row')?.id.replace('row-', "");
+    const activePageUUid = "dummy";
 
     // set the titles here
-    const dropLine = (<i-panel id={`menuDropLine-0`} width={'100%'} height={'5px'}></i-panel>);
-    this.pnlMenu.appendChild(dropLine);
+    const firstDropLine = this.renderDropLine('start');
+    this.pnlMenu.appendChild(firstDropLine);
+
     for (let i = 0; i < items.length; i++) {
-
-      const isActive = activePageId == items[i].uuid;
-      const menuCard = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0)
-      this.pnlMenu.appendChild(menuCard);
-
-      const dropLine = (<i-panel id={`menuDropLine-${i + 1}`} width={'100%'} height={'5px'}></i-panel>);
-      this.pnlMenu.appendChild(dropLine);
+      const isActive = activePageUUid == items[i].uuid;
+      const menuCardWrapper = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0)
+      this.pnlMenu.appendChild(menuCardWrapper);
     }
+  }
+
+  renderDropLine(uuid: string) {
+    return <i-panel id={`menuDropLine-${uuid}`} width={'100%'} height={'5px'}></i-panel>
   }
 
   renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number) {
@@ -334,7 +367,15 @@ export default class ScomPagesMenu extends Module {
     menuCard.setAttribute('cid', cid);
     menuCard.setAttribute('level', level);
     this.initMenuCardEventListener(menuCard);
-    return menuCard;
+
+    const dropLine = this.renderDropLine(uuid);
+
+    const menuWrapper = (<i-vstack id="menuCardWrapper">
+      {menuCard}
+      {dropLine}
+    </i-vstack>)
+
+    return menuWrapper;
   }
 
   handleChildren(uuid: string) {
@@ -396,10 +437,8 @@ export default class ScomPagesMenu extends Module {
 
   private goToPage(cid: string) {
     console.log(`Go to ${cid}`);
-    // const parent = this.closest('#editor') || document;
-    // const row = parent.querySelector(`#row-${uuid}`) as PageRow;
-    // row.scrollIntoView();
-    // row.showSection(uuid);
+    // Todo: use callback
+    if (this.updatePage) this.updatePage(cid);
   }
 
   render() {
@@ -408,7 +447,7 @@ export default class ScomPagesMenu extends Module {
         class={menuBtnStyle} zIndex={150}>
         <i-hstack gap={'1rem'} verticalAlignment='center'>
           <i-label caption={"Pages menu"} font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }}
-            class="prevent-select" onClick={() => console.log(this.data)}></i-label>
+            class="prevent-select"></i-label>
         </i-hstack>
         <i-vstack id="pnlMenuWrapper" width={320}>
           <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>

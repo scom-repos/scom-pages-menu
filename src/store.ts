@@ -13,25 +13,25 @@ export class PagesObject {
         this._data = value;
     }
 
-    getPage(id: string, currentPage?: IPageData): IPageData | undefined {
+    getPage(uuid: string, currentPage?: IPageData): IPageData | undefined {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (const page of this._data.pages) {
-                const result = this.getPage(id, page);
+                const result = this.getPage(uuid, page);
                 if (result) {
                     return result;
                 }
             }
         } else {
             // Check if the current page matches the ID
-            if (currentPage.uuid === id) {
+            if (currentPage.uuid === uuid) {
                 return currentPage;
             }
 
             // If the current page has sub-pages, search within them
             if (currentPage.pages) {
                 for (const subPage of currentPage.pages) {
-                    const result = this.getPage(id, subPage);
+                    const result = this.getPage(uuid, subPage);
                     if (result) {
                         return result;
                     }
@@ -43,7 +43,7 @@ export class PagesObject {
     }
 
     setPage(
-        id: string,
+        uuid: string,
         newName?: string,
         newCid?: string,
         newPages?: IPageData[],
@@ -52,13 +52,13 @@ export class PagesObject {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (const page of this._data.pages) {
-                if (this.setPage(id, newName, newCid, newPages, page)) {
+                if (this.setPage(uuid, newName, newCid, newPages, page)) {
                     return true; // Page found and updated
                 }
             }
         } else {
             // Check if the current page matches the ID
-            if (currentPage.uuid === id) {
+            if (currentPage.uuid === uuid) {
                 if (newName !== undefined) {
                     currentPage.name = newName;
                 }
@@ -74,7 +74,7 @@ export class PagesObject {
             // If the current page has sub-pages, search within them
             if (currentPage.pages) {
                 for (const subPage of currentPage.pages) {
-                    if (this.setPage(id, newName, newCid, newPages, subPage)) {
+                    if (this.setPage(uuid, newName, newCid, newPages, subPage)) {
                         return true; // Page found and updated
                     }
                 }
@@ -84,35 +84,51 @@ export class PagesObject {
         return false; // Page not found
     }
 
-    addPage(parentId: string, newPage: IPageData): boolean {
-        const parent = this.getPage(parentId);
+    addPage(newPage: IPageData, parentId?: string, index?: number): boolean {
 
-        if (parent) {
-            if (!parent.pages) {
-                parent.pages = [];
+        if (parentId) {
+            const parent = this.getPage(parentId);
+
+            if (parent) {
+                if (!parent.pages) {
+                    parent.pages = [];
+                }
+                if (index !== undefined && index >= 0 && index <= this._data.pages.length) parent.pages.splice(index, 0, newPage);
+                else parent.pages.push(newPage);
+                return true; // Page added to parent
+            } else {
+                return false; // Page not found
             }
-            parent.pages.push(newPage);
+
+        } else {
+            if (index !== undefined && index >= 0 && index <= this._data.pages.length) this._data.pages.splice(index, 0, newPage);
+            else this._data.pages.push(newPage);
             return true; // Page added to parent
         }
-
-        return false; // Parent page not found
     }
 
-    deletePage(id: string, currentPage?: IPageData, parent?: IPageData): boolean {
+    deletePage(uuid: string, currentPage?: IPageData, parent?: IPageData): boolean {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (let i = 0; i < this._data.pages.length; i++) {
-                if (this.deletePage(id, this._data.pages[i])) {
+                if (this.deletePage(uuid, this._data.pages[i])) {
                     return true; // Page found and deleted
                 }
             }
         } else {
             // Check if the current page matches the ID
-            if (currentPage.uuid === id) {
+            if (currentPage.uuid === uuid) {
                 if (parent && parent.pages) {
-                    const index = parent.pages.findIndex((page) => page.uuid === id);
+                    const index = parent.pages.findIndex((page) => page.uuid === uuid);
                     if (index !== -1) {
                         parent.pages.splice(index, 1); // Remove the page from its parent
+                        return true; // Page found and deleted
+                    }
+                } else if (!parent) {
+                    // If there is no parent, it means we are deleting a top-level page
+                    const index = this._data.pages.findIndex((page) => page.uuid === uuid);
+                    if (index !== -1) {
+                        this._data.pages.splice(index, 1); // Remove the top-level page
                         return true; // Page found and deleted
                     }
                 }
@@ -121,13 +137,44 @@ export class PagesObject {
             // If the current page has sub-pages, search within them
             if (currentPage.pages) {
                 for (let i = 0; i < currentPage.pages.length; i++) {
-                    if (this.deletePage(id, currentPage.pages[i], currentPage)) {
+                    if (this.deletePage(uuid, currentPage.pages[i], currentPage)) {
                         return true; // Page found and deleted
                     }
                 }
             }
         }
         return false; // Page not found
+    }
+
+
+    getParent(uuid: string): IPageData {
+        for (const page of this._data.pages) {
+            if (page.uuid === uuid) {
+                return undefined; // The given id represents a page in the first hierarchy
+            }
+            if (page.pages) {
+                const subParent = this.findParent(page, uuid);
+                if (subParent) {
+                    return subParent;
+                }
+            }
+        }
+        return undefined;
+    }
+
+    private findParent(page: IPageData, uuid: string): IPageData {
+        for (const _page of page.pages) {
+            if (_page.uuid === uuid) {
+                return page;
+            }
+            if (_page.pages) {
+                const subParent = this.findParent(_page, uuid);
+                if (subParent) {
+                    return subParent;
+                }
+            }
+        }
+        return undefined; // No parent found
     }
 }
 
