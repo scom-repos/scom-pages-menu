@@ -54,6 +54,11 @@ export default class ScomPagesMenu extends Module {
     return pagesObject.data;
   }
 
+  set data(value: IPagesMenu) {
+    pagesObject.data = value;
+    this.renderMenu();
+  }
+
   private pnlMenu: VStack;
   private draggingPageUUid: string;
   private isEditing: boolean = false;
@@ -72,7 +77,7 @@ export default class ScomPagesMenu extends Module {
   }
 
   private initEventBus() {
-    
+
   }
 
   private initEventListener() {

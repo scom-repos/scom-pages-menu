@@ -273,6 +273,10 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         get data() {
             return store_1.pagesObject.data;
         }
+        set data(value) {
+            store_1.pagesObject.data = value;
+            this.renderMenu();
+        }
         init() {
             super.init();
             this.initEventBus();

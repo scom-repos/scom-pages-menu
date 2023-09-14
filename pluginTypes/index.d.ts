@@ -59,6 +59,7 @@ declare module "@scom/scom-pages-menu" {
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         get data(): IPagesMenu;
+        set data(value: IPagesMenu);
         private pnlMenu;
         private draggingPageUUid;
         private isEditing;
