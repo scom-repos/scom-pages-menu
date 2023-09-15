@@ -14,17 +14,17 @@ import {
   Input,
   HStack
 } from '@ijstech/components';
-import { pagesMenuStyle, menuBtnStyle, menuCardStyle, menuStyle } from './index.css';
+import { pagesMenuStyle, menuCardStyle, menuStyle } from './index.css';
 import { IPagesMenu, IPageData } from './interface'
 import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
-type UpdatePage = (cid: string) => void;
+type RedirectByCid = (cid: string) => void;
 
 interface ScomPagesMenuElement extends ControlElement {
   data: IPagesMenu,
-  updatePage: UpdatePage
+  redirectByCid: RedirectByCid
 }
 
 declare global {
@@ -38,7 +38,7 @@ declare global {
 @customModule
 @customElements('i-scom-pages-menu')
 export default class ScomPagesMenu extends Module {
-  private updatePage: UpdatePage;
+  private redirectByCid: RedirectByCid;
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -63,6 +63,7 @@ export default class ScomPagesMenu extends Module {
   private draggingPageUUid: string;
   private isEditing: boolean = false;
   private focusedPageId: string;
+  private activePageUUid: string;
 
   private noDataTxt = "No Pages";
 
@@ -71,7 +72,7 @@ export default class ScomPagesMenu extends Module {
     this.initEventBus();
     this.initEventListener();
     const data = this.getAttribute('data', true);
-    this.updatePage = this.getAttribute('updatePage', true);
+    this.redirectByCid = this.getAttribute('redirectByCid', true);
     pagesObject.data = data;
     this.renderMenu();
   }
@@ -238,10 +239,10 @@ export default class ScomPagesMenu extends Module {
   }
 
   removeChildren(parentUUid: string) {
-    const childElms = this.pnlMenu.querySelectorAll(`[parentUUid="${parentUUid}"]`);
+    const childElms = this.pnlMenu.querySelectorAll(`[parentuuid="${parentUUid}"]`);
     for (const childElm of childElms) {
-      const grandChildElmExist = this.pnlMenu.querySelector(`[parentUUid="${childElm.getAttribute('uuid')}"]`);
-      if (grandChildElmExist) this.removeChildren(childElm.getAttribute('uuid'));
+      const grandChildElmExist = this.pnlMenu.querySelector(`[parentuuid="${childElm.querySelector('#menuCard').getAttribute('uuid')}"]`);
+      if (grandChildElmExist) this.removeChildren(childElm.querySelector('#menuCard').getAttribute('uuid'));
       childElm.remove();
     }
   }
@@ -252,7 +253,8 @@ export default class ScomPagesMenu extends Module {
       return {
         caption: page.name || "Untitled Page",
         cid: page.cid,
-        uuid: page.uuid
+        uuid: page.uuid,
+        children: page.pages
       };
     })
     if (!items.length) {
@@ -275,21 +277,30 @@ export default class ScomPagesMenu extends Module {
       return;
     }
 
-    const activePageUUid = "dummy";
-
     // set the titles here
     const firstDropLine = this.renderDropLine('start');
     this.pnlMenu.appendChild(firstDropLine);
 
     for (let i = 0; i < items.length; i++) {
-      const isActive = activePageUUid == items[i].uuid;
+      const isActive = this.activePageUUid == items[i].uuid;
       const menuCardWrapper = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0)
       this.pnlMenu.appendChild(menuCardWrapper);
+      if (items[i].children && items[i].children.length > 0) this.renderChildren(items[i].uuid);
     }
   }
 
   renderDropLine(uuid: string) {
     return <i-panel id={`menuDropLine-${uuid}`} width={'100%'} height={'5px'}></i-panel>
+  }
+
+  onClickAddChildBtn(parentUuid: string) {
+    pagesObject.addPage({
+      uuid: generateUUID(),
+      name: 'Untitled page',
+      cid: '',
+      url: ''
+    }, parentUuid)
+    this.renderMenu();
   }
 
   renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number) {
@@ -302,7 +313,7 @@ export default class ScomPagesMenu extends Module {
         width="100%"
         border={{ radius: 5 }}
         overflow="hidden"
-        onClick={() => cid ? this.goToPage(cid) : this.handleChildren(uuid)}
+        onClick={() => cid ? this.goToPage(uuid, cid) : this.handleChildren(uuid)}
       >
         <i-hstack verticalAlignment="center" horizontalAlignment='start'>
           <i-label
@@ -331,18 +342,32 @@ export default class ScomPagesMenu extends Module {
             padding={{ left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' }}
           ></i-input>
         </i-hstack>
-        <i-icon
-          id="cardRenameBtn"
-          name='pen'
-          fill={'var(--colors-primary-main)'}
-          width={28} height={28}
-          padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
-          margin={{ right: 4 }}
-          class="pointer iconButton"
-          visible={false}
-          tooltip={{ content: "Rename", placement: "top" }}
-          onClick={() => this.onClickRenameBtn(uuid)}
-        ></i-icon>
+        <i-hstack id="actionBtnStack" verticalAlignment="center" visible={false}>
+          <i-icon
+            id="cardAddChildBtn"
+            name='plus'
+            fill={'var(--colors-primary-main)'}
+            width={28} height={28}
+            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            margin={{ right: 4 }}
+            class="pointer iconButton"
+            // visible={false}
+            tooltip={{ content: "Add child", placement: "top" }}
+            onClick={() => this.onClickAddChildBtn(uuid)}
+          ></i-icon>
+          <i-icon
+            id="cardRenameBtn"
+            name='pen'
+            fill={'var(--colors-primary-main)'}
+            width={28} height={28}
+            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            margin={{ right: 4 }}
+            class="pointer iconButton"
+            // visible={false}
+            tooltip={{ content: "Rename", placement: "top" }}
+            onClick={() => this.onClickRenameBtn(uuid)}
+          ></i-icon>
+        </i-hstack>
         <i-hstack id="editBtnStack" verticalAlignment="center" visible={false}>
           <i-icon
             name='times'
@@ -420,8 +445,8 @@ export default class ScomPagesMenu extends Module {
 
   private toggleRenameBtn(uuid: string, toggle: boolean) {
     const currCard = this.pnlMenu.querySelector(`[uuid="${uuid}"]`) as HTMLElement;
-    const cardRenameBtn = currCard.querySelector('#cardRenameBtn');
-    (cardRenameBtn as Icon).visible = toggle;
+    const actionBtnStack = currCard.querySelector('#actionBtnStack');
+    (actionBtnStack as HStack).visible = toggle;
   }
 
   private toggleEditor(uuid: string, toggle: boolean) {
@@ -430,31 +455,30 @@ export default class ScomPagesMenu extends Module {
     const currCard = this.pnlMenu.querySelector(`[uuid="${uuid}"]`) as HTMLElement;
     const cardTitle = currCard.querySelector('#cardTitle');
     const cardInput = currCard.querySelector('#cardInput');
-    const cardRenameBtn = currCard.querySelector('#cardRenameBtn');
+    const actionBtnStack = currCard.querySelector('#actionBtnStack');
 
     (cardInput as Input).value = (cardTitle as Label).caption;
     (cardTitle as Label).visible = !toggle;
     (cardInput as Input).visible = toggle;
-    (cardRenameBtn as Icon).visible = !toggle;
+    (actionBtnStack as HStack).visible = !toggle;
     const editBtnStack = currCard.querySelector('#editBtnStack') as HStack;
     editBtnStack.visible = toggle;
   }
 
-  private goToPage(cid: string) {
-    console.log(`Go to ${cid}`);
-    // Todo: use callback
-    if (this.updatePage) this.updatePage(cid);
+  private goToPage(uuid: string, cid: string) {
+    this.activePageUUid = uuid;
+    if (this.redirectByCid) this.redirectByCid(cid);
   }
 
   render() {
     return (
-      <i-vstack id="menuWrapper" gap={"0.5rem"}
-        class={menuBtnStyle} zIndex={150}>
+      <i-vstack gap={"0.5rem"} background={{ color: "#FAFAFA" }} height={"100%"}
+        padding={{ top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' }}>
         <i-hstack gap={'1rem'} verticalAlignment='center'>
           <i-label caption={"Pages menu"} font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }}
             class="prevent-select"></i-label>
         </i-hstack>
-        <i-vstack id="pnlMenuWrapper" width={320}>
+        <i-vstack id="pnlMenuWrapper" width={"100%"}>
           <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>
         </i-vstack>
       </i-vstack>

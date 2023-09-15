@@ -16,10 +16,12 @@ export default class Module1 extends Module {
         super.init();
     }
 
+    testFunction() { }
+
     render() {
         return <i-panel>
 
-            <i-scom-pages-menu id="menu" data={data}></i-scom-pages-menu>
+            <i-scom-pages-menu id="menu" data={data} redirectByCid={this.testFunction} width="300px" display={'block'}></i-scom-pages-menu>
 
         </i-panel>
     }

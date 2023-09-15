@@ -7,16 +7,9 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.menuStyle = exports.menuCardStyle = exports.menuBtnStyle = exports.pagesMenuStyle = void 0;
+    exports.menuStyle = exports.menuCardStyle = exports.pagesMenuStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
     exports.pagesMenuStyle = components_1.Styles.style({});
-    exports.menuBtnStyle = components_1.Styles.style({
-        $nest: {
-            '.prevent-select': {
-                userSelect: 'none'
-            }
-        }
-    });
     exports.menuCardStyle = components_1.Styles.style({
         cursor: 'pointer',
         opacity: 1,
@@ -255,7 +248,7 @@ define("@scom/scom-pages-menu/utils.ts", ["require", "exports"], function (requi
     };
     exports.generateUUID = generateUUID;
 });
-define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@scom/scom-pages-menu/index.css.ts", "@scom/scom-pages-menu/store.ts"], function (require, exports, components_2, index_css_1, store_1) {
+define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@scom/scom-pages-menu/index.css.ts", "@scom/scom-pages-menu/store.ts", "@scom/scom-pages-menu/utils.ts"], function (require, exports, components_2, index_css_1, store_1, utils_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
     const Theme = components_2.Styles.Theme.ThemeVars;
@@ -282,7 +275,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.initEventBus();
             this.initEventListener();
             const data = this.getAttribute('data', true);
-            this.updatePage = this.getAttribute('updatePage', true);
+            this.redirectByCid = this.getAttribute('redirectByCid', true);
             store_1.pagesObject.data = data;
             this.renderMenu();
         }
@@ -443,11 +436,11 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             }
         }
         removeChildren(parentUUid) {
-            const childElms = this.pnlMenu.querySelectorAll(`[parentUUid="${parentUUid}"]`);
+            const childElms = this.pnlMenu.querySelectorAll(`[parentuuid="${parentUUid}"]`);
             for (const childElm of childElms) {
-                const grandChildElmExist = this.pnlMenu.querySelector(`[parentUUid="${childElm.getAttribute('uuid')}"]`);
+                const grandChildElmExist = this.pnlMenu.querySelector(`[parentuuid="${childElm.querySelector('#menuCard').getAttribute('uuid')}"]`);
                 if (grandChildElmExist)
-                    this.removeChildren(childElm.getAttribute('uuid'));
+                    this.removeChildren(childElm.querySelector('#menuCard').getAttribute('uuid'));
                 childElm.remove();
             }
         }
@@ -457,7 +450,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 return {
                     caption: page.name || "Untitled Page",
                     cid: page.cid,
-                    uuid: page.uuid
+                    uuid: page.uuid,
+                    children: page.pages
                 };
             });
             if (!items.length) {
@@ -466,26 +460,42 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 this.pnlMenu.appendChild(txt);
                 return;
             }
-            const activePageUUid = "dummy";
             // set the titles here
             const firstDropLine = this.renderDropLine('start');
             this.pnlMenu.appendChild(firstDropLine);
             for (let i = 0; i < items.length; i++) {
-                const isActive = activePageUUid == items[i].uuid;
+                const isActive = this.activePageUUid == items[i].uuid;
                 const menuCardWrapper = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0);
                 this.pnlMenu.appendChild(menuCardWrapper);
+                if (items[i].children && items[i].children.length > 0)
+                    this.renderChildren(items[i].uuid);
             }
         }
         renderDropLine(uuid) {
             return this.$render("i-panel", { id: `menuDropLine-${uuid}`, width: '100%', height: '5px' });
         }
+        onClickAddChildBtn(parentUuid) {
+            store_1.pagesObject.addPage({
+                uuid: (0, utils_1.generateUUID)(),
+                name: 'Untitled page',
+                cid: '',
+                url: ''
+            }, parentUuid);
+            this.renderMenu();
+        }
         renderMenuCard(uuid, name, cid, isActive, level) {
-            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => cid ? this.goToPage(cid) : this.handleChildren(uuid) },
+            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => cid ? this.goToPage(uuid, cid) : this.handleChildren(uuid) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start' },
                     this.$render("i-label", { id: "cardDot", caption: "•", font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8 + level * 8, right: 8 }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
                     this.$render("i-label", { id: "cardTitle", caption: name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
-                this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", visible: false, tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) }),
+                this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
+                    this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", 
+                        // visible={false}
+                        tooltip: { content: "Add child", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
+                    this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", 
+                        // visible={false}
+                        tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) })),
                 this.$render("i-hstack", { id: "editBtnStack", verticalAlignment: "center", visible: false },
                     this.$render("i-icon", { name: 'times', width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", tooltip: { content: "Cancel", placement: "top" }, onClick: () => this.onClickCancelBtn(uuid) }),
                     this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
@@ -531,33 +541,32 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         toggleRenameBtn(uuid, toggle) {
             const currCard = this.pnlMenu.querySelector(`[uuid="${uuid}"]`);
-            const cardRenameBtn = currCard.querySelector('#cardRenameBtn');
-            cardRenameBtn.visible = toggle;
+            const actionBtnStack = currCard.querySelector('#actionBtnStack');
+            actionBtnStack.visible = toggle;
         }
         toggleEditor(uuid, toggle) {
             this.isEditing = toggle;
             const currCard = this.pnlMenu.querySelector(`[uuid="${uuid}"]`);
             const cardTitle = currCard.querySelector('#cardTitle');
             const cardInput = currCard.querySelector('#cardInput');
-            const cardRenameBtn = currCard.querySelector('#cardRenameBtn');
+            const actionBtnStack = currCard.querySelector('#actionBtnStack');
             cardInput.value = cardTitle.caption;
             cardTitle.visible = !toggle;
             cardInput.visible = toggle;
-            cardRenameBtn.visible = !toggle;
+            actionBtnStack.visible = !toggle;
             const editBtnStack = currCard.querySelector('#editBtnStack');
             editBtnStack.visible = toggle;
         }
-        goToPage(cid) {
-            console.log(`Go to ${cid}`);
-            // Todo: use callback
-            if (this.updatePage)
-                this.updatePage(cid);
+        goToPage(uuid, cid) {
+            this.activePageUUid = uuid;
+            if (this.redirectByCid)
+                this.redirectByCid(cid);
         }
         render() {
-            return (this.$render("i-vstack", { id: "menuWrapper", gap: "0.5rem", class: index_css_1.menuBtnStyle, zIndex: 150 },
+            return (this.$render("i-vstack", { gap: "0.5rem", background: { color: "#FAFAFA" }, height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },
                 this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center' },
                     this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" })),
-                this.$render("i-vstack", { id: "pnlMenuWrapper", width: 320 },
+                this.$render("i-vstack", { id: "pnlMenuWrapper", width: "100%" },
                     this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
         }
     };

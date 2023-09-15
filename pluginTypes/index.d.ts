@@ -1,7 +1,6 @@
 /// <amd-module name="@scom/scom-pages-menu/index.css.ts" />
 declare module "@scom/scom-pages-menu/index.css.ts" {
     export const pagesMenuStyle: string;
-    export const menuBtnStyle: string;
     export const menuCardStyle: string;
     export const menuStyle: string;
 }
@@ -42,10 +41,10 @@ declare module "@scom/scom-pages-menu/utils.ts" {
 declare module "@scom/scom-pages-menu" {
     import { Module, ControlElement, Container } from '@ijstech/components';
     import { IPagesMenu } from "@scom/scom-pages-menu/interface.ts";
-    type UpdatePage = (cid: string) => void;
+    type RedirectByCid = (cid: string) => void;
     interface ScomPagesMenuElement extends ControlElement {
         data: IPagesMenu;
-        updatePage: UpdatePage;
+        redirectByCid: RedirectByCid;
     }
     global {
         namespace JSX {
@@ -55,7 +54,7 @@ declare module "@scom/scom-pages-menu" {
         }
     }
     export default class ScomPagesMenu extends Module {
-        private updatePage;
+        private redirectByCid;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         get data(): IPagesMenu;
@@ -64,6 +63,7 @@ declare module "@scom/scom-pages-menu" {
         private draggingPageUUid;
         private isEditing;
         private focusedPageId;
+        private activePageUUid;
         private noDataTxt;
         init(): void;
         private initEventBus;
@@ -78,6 +78,7 @@ declare module "@scom/scom-pages-menu" {
         removeChildren(parentUUid: string): void;
         renderMenu(): void;
         renderDropLine(uuid: string): any;
+        onClickAddChildBtn(parentUuid: string): void;
         renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number): any;
         handleChildren(uuid: string): void;
         private setCardTitle;

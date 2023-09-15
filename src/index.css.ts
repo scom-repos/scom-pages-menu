@@ -5,14 +5,6 @@ export const pagesMenuStyle = Styles.style({
 
 })
 
-export const menuBtnStyle = Styles.style({
-  $nest: {
-    '.prevent-select': {
-      userSelect: 'none'
-    }
-  }
-})
-
 export const menuCardStyle = Styles.style({
   cursor: 'pointer',
   opacity: 1,
