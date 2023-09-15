@@ -7,9 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.menuStyle = exports.menuCardStyle = exports.pagesMenuStyle = void 0;
+    exports.menuStyle = exports.iconButtonStyle = exports.menuCardStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
-    exports.pagesMenuStyle = components_1.Styles.style({});
     exports.menuCardStyle = components_1.Styles.style({
         cursor: 'pointer',
         opacity: 1,
@@ -36,12 +35,14 @@ define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/co
             '.focused-card': {
                 color: "#0247bf !important",
                 fontWeight: "600 !important"
-            },
-            '.iconButton:hover': {
+            }
+        }
+    });
+    exports.iconButtonStyle = components_1.Styles.style({
+        borderRadius: '10px',
+        $nest: {
+            '&:hover': {
                 backgroundColor: '#abccd4 !important'
-            },
-            '.iconButton': {
-                borderRadius: '10px'
             }
         }
     });
@@ -419,6 +420,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             }
         }
         renderChildren(parentUUid) {
+            if (!parentUUid)
+                return;
             const parentElm = this.pnlMenu.querySelector(`[uuid="${parentUUid}"]`);
             const parentElmWrapper = parentElm.parentElement;
             const parentData = store_1.pagesObject.getPage(parentUUid);
@@ -482,23 +485,28 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 url: ''
             }, parentUuid);
             this.renderMenu();
+            this.renderChildren(parentUuid);
+        }
+        onClickMenuCard(uuid) {
+            const page = store_1.pagesObject.getPage(uuid);
+            if (page.cid)
+                this.redirect(page.uuid, page.cid);
+            if (page.pages)
+                this.changeChildrenVisibility(uuid);
         }
         renderMenuCard(uuid, name, cid, isActive, level) {
-            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => cid ? this.goToPage(uuid, cid) : this.handleChildren(uuid) },
+            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start' },
                     this.$render("i-label", { id: "cardDot", caption: "•", font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8 + level * 8, right: 8 }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
                     this.$render("i-label", { id: "cardTitle", caption: name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
                 this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
-                    this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", 
-                        // visible={false}
-                        tooltip: { content: "Add child", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
-                    this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", 
-                        // visible={false}
-                        tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) })),
+                    this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
+                    this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) }),
+                    this.$render("i-icon", { id: "cardRemoveBtn", name: 'trash', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Remove", placement: "top" }, onClick: () => this.onClickRemoveBtn(uuid) })),
                 this.$render("i-hstack", { id: "editBtnStack", verticalAlignment: "center", visible: false },
-                    this.$render("i-icon", { name: 'times', width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", tooltip: { content: "Cancel", placement: "top" }, onClick: () => this.onClickCancelBtn(uuid) }),
-                    this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: "pointer iconButton", tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
+                    this.$render("i-icon", { name: 'times', width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Cancel", placement: "top" }, onClick: () => this.onClickCancelBtn(uuid) }),
+                    this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
             menuCard.setAttribute('uuid', uuid);
             menuCard.setAttribute('draggable', 'true');
             menuCard.setAttribute('cid', cid);
@@ -510,7 +518,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 dropLine));
             return menuWrapper;
         }
-        handleChildren(uuid) {
+        changeChildrenVisibility(uuid) {
             const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
             if (isChildExist) {
                 this.removeChildren(uuid);
@@ -528,6 +536,10 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             // change UI on-the-fly
             const cardTitle = currCard.querySelector('#cardTitle');
             cardTitle.caption = caption;
+        }
+        onClickRemoveBtn(uuid) {
+            store_1.pagesObject.deletePage(uuid);
+            this.renderMenu();
         }
         onClickRenameBtn(uuid) {
             this.toggleEditor(uuid, true);
@@ -557,15 +569,16 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const editBtnStack = currCard.querySelector('#editBtnStack');
             editBtnStack.visible = toggle;
         }
-        goToPage(uuid, cid) {
+        redirect(uuid, cid) {
             this.activePageUUid = uuid;
             if (this.redirectByCid)
                 this.redirectByCid(cid);
         }
         render() {
             return (this.$render("i-vstack", { gap: "0.5rem", background: { color: "#FAFAFA" }, height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },
-                this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center' },
-                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" })),
+                this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center', horizontalAlignment: 'space-between' },
+                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" }),
+                    this.$render("i-icon", { name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null) })),
                 this.$render("i-vstack", { id: "pnlMenuWrapper", width: "100%" },
                     this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
         }

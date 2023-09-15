@@ -2,19 +2,16 @@ import {
   Module,
   customModule,
   Styles,
-  Panel,
   ControlElement,
   customElements,
   Container,
-  Button,
   Control,
   Label,
-  Icon,
   VStack,
   Input,
   HStack
 } from '@ijstech/components';
-import { pagesMenuStyle, menuCardStyle, menuStyle } from './index.css';
+import { iconButtonStyle, menuCardStyle, menuStyle } from './index.css';
 import { IPagesMenu, IPageData } from './interface'
 import { pagesObject } from './store'
 import { generateUUID } from './utils'
@@ -221,6 +218,7 @@ export default class ScomPagesMenu extends Module {
   }
 
   renderChildren(parentUUid: string) {
+    if (!parentUUid) return;
     const parentElm = this.pnlMenu.querySelector(`[uuid="${parentUUid}"]`);
     const parentElmWrapper = parentElm.parentElement;
     const parentData = pagesObject.getPage(parentUUid);
@@ -301,6 +299,13 @@ export default class ScomPagesMenu extends Module {
       url: ''
     }, parentUuid)
     this.renderMenu();
+    this.renderChildren(parentUuid);
+  }
+
+  onClickMenuCard(uuid: string) {
+    const page = pagesObject.getPage(uuid);
+    if (page.cid) this.redirect(page.uuid, page.cid);
+    if (page.pages) this.changeChildrenVisibility(uuid);
   }
 
   renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number) {
@@ -313,7 +318,7 @@ export default class ScomPagesMenu extends Module {
         width="100%"
         border={{ radius: 5 }}
         overflow="hidden"
-        onClick={() => cid ? this.goToPage(uuid, cid) : this.handleChildren(uuid)}
+        onClick={() => this.onClickMenuCard(uuid)}
       >
         <i-hstack verticalAlignment="center" horizontalAlignment='start'>
           <i-label
@@ -350,9 +355,8 @@ export default class ScomPagesMenu extends Module {
             width={28} height={28}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class="pointer iconButton"
-            // visible={false}
-            tooltip={{ content: "Add child", placement: "top" }}
+            class={`pointer ${iconButtonStyle}`}
+            tooltip={{ content: "Add page", placement: "top" }}
             onClick={() => this.onClickAddChildBtn(uuid)}
           ></i-icon>
           <i-icon
@@ -362,10 +366,20 @@ export default class ScomPagesMenu extends Module {
             width={28} height={28}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class="pointer iconButton"
-            // visible={false}
+            class={`pointer ${iconButtonStyle}`}
             tooltip={{ content: "Rename", placement: "top" }}
             onClick={() => this.onClickRenameBtn(uuid)}
+          ></i-icon>
+          <i-icon
+            id="cardRemoveBtn"
+            name='trash'
+            fill={'var(--colors-primary-main)'}
+            width={28} height={28}
+            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            margin={{ right: 4 }}
+            class={`pointer ${iconButtonStyle}`}
+            tooltip={{ content: "Remove", placement: "top" }}
+            onClick={() => this.onClickRemoveBtn(uuid)}
           ></i-icon>
         </i-hstack>
         <i-hstack id="editBtnStack" verticalAlignment="center" visible={false}>
@@ -375,7 +389,7 @@ export default class ScomPagesMenu extends Module {
             fill={'var(--colors-primary-main)'}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class="pointer iconButton"
+            class={`pointer ${iconButtonStyle}`}
             tooltip={{ content: "Cancel", placement: "top" }}
             onClick={() => this.onClickCancelBtn(uuid)}
           ></i-icon>
@@ -385,7 +399,7 @@ export default class ScomPagesMenu extends Module {
             fill={'var(--colors-primary-main)'}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class="pointer iconButton"
+            class={`pointer ${iconButtonStyle}`}
             tooltip={{ content: "Confirm", placement: "top" }}
             onClick={() => this.onClickConfirmBtn(uuid)}
           ></i-icon>
@@ -408,7 +422,7 @@ export default class ScomPagesMenu extends Module {
     return menuWrapper;
   }
 
-  handleChildren(uuid: string) {
+  changeChildrenVisibility(uuid: string) {
     const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
     if (isChildExist) {
       this.removeChildren(uuid);
@@ -428,6 +442,11 @@ export default class ScomPagesMenu extends Module {
     // change UI on-the-fly
     const cardTitle = currCard.querySelector('#cardTitle');
     (cardTitle as Label).caption = caption;
+  }
+
+  private onClickRemoveBtn(uuid: string) {
+    pagesObject.deletePage(uuid);
+    this.renderMenu();
   }
 
   private onClickRenameBtn(uuid: string) {
@@ -465,7 +484,7 @@ export default class ScomPagesMenu extends Module {
     editBtnStack.visible = toggle;
   }
 
-  private goToPage(uuid: string, cid: string) {
+  private redirect(uuid: string, cid: string) {
     this.activePageUUid = uuid;
     if (this.redirectByCid) this.redirectByCid(cid);
   }
@@ -474,9 +493,22 @@ export default class ScomPagesMenu extends Module {
     return (
       <i-vstack gap={"0.5rem"} background={{ color: "#FAFAFA" }} height={"100%"}
         padding={{ top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' }}>
-        <i-hstack gap={'1rem'} verticalAlignment='center'>
-          <i-label caption={"Pages menu"} font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }}
-            class="prevent-select"></i-label>
+        <i-hstack gap={'1rem'} verticalAlignment='center' horizontalAlignment='space-between'>
+          <i-label
+            caption={"Pages menu"}
+            font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }}
+            class="prevent-select"
+          ></i-label>
+          <i-icon
+            name='plus'
+            fill={'var(--colors-primary-main)'}
+            width={28} height={28}
+            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            margin={{ right: 4 }}
+            class={`pointer ${iconButtonStyle}`}
+            tooltip={{ content: "Add page", placement: "top" }}
+            onClick={() => this.onClickAddChildBtn(null)}
+          ></i-icon>
         </i-hstack>
         <i-vstack id="pnlMenuWrapper" width={"100%"}>
           <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>

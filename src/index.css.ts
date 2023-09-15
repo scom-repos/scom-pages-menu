@@ -1,10 +1,6 @@
 import { Styles } from "@ijstech/components";
 const Theme = Styles.Theme.ThemeVars;
 
-export const pagesMenuStyle = Styles.style({
-
-})
-
 export const menuCardStyle = Styles.style({
   cursor: 'pointer',
   opacity: 1,
@@ -31,12 +27,15 @@ export const menuCardStyle = Styles.style({
     '.focused-card': {
       color: "#0247bf !important",
       fontWeight: "600 !important"
-    },
-    '.iconButton:hover': {
+    }
+  }
+})
+
+export const iconButtonStyle = Styles.style({
+  borderRadius: '10px',
+  $nest: {
+    '&:hover': {
       backgroundColor: '#abccd4 !important'
-    },
-    '.iconButton': {
-      borderRadius: '10px'
     }
   }
 })

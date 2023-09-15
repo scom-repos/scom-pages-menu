@@ -1,5 +1,4 @@
 import { Module, customModule, Container } from '@ijstech/components';
-import assets from '@modules/assets';
 import ScomPagesMenu from '@scom/scom-pages-menu'
 import { data } from './data'
 

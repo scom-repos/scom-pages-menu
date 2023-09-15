@@ -1,7 +1,7 @@
 /// <amd-module name="@scom/scom-pages-menu/index.css.ts" />
 declare module "@scom/scom-pages-menu/index.css.ts" {
-    export const pagesMenuStyle: string;
     export const menuCardStyle: string;
+    export const iconButtonStyle: string;
     export const menuStyle: string;
 }
 /// <amd-module name="@scom/scom-pages-menu/interface.ts" />
@@ -79,15 +79,17 @@ declare module "@scom/scom-pages-menu" {
         renderMenu(): void;
         renderDropLine(uuid: string): any;
         onClickAddChildBtn(parentUuid: string): void;
+        onClickMenuCard(uuid: string): void;
         renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number): any;
-        handleChildren(uuid: string): void;
+        changeChildrenVisibility(uuid: string): void;
         private setCardTitle;
+        private onClickRemoveBtn;
         private onClickRenameBtn;
         private onClickConfirmBtn;
         private onClickCancelBtn;
         private toggleRenameBtn;
         private toggleEditor;
-        private goToPage;
+        private redirect;
         render(): any;
     }
 }
