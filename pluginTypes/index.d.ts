@@ -55,6 +55,7 @@ declare module "@scom/scom-pages-menu" {
     }
     export default class ScomPagesMenu extends Module {
         private redirectByCid;
+        private expandedMenuItem;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         get data(): IPagesMenu;
@@ -69,19 +70,19 @@ declare module "@scom/scom-pages-menu" {
         private initEventBus;
         private initEventListener;
         private initMenuCardEventListener;
-        setfocusCard(uuid: string): void;
+        private setfocusCard;
         private getActiveDropLineUuid;
         private showDropBox;
         private reorderPage;
         private setActiveDropLine;
-        renderChildren(parentUUid: string): void;
-        removeChildren(parentUUid: string): void;
-        renderMenu(): void;
-        renderDropLine(uuid: string): any;
-        onClickAddChildBtn(parentUuid: string): void;
-        onClickMenuCard(uuid: string): void;
-        renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number): any;
-        changeChildrenVisibility(uuid: string): void;
+        private renderChildren;
+        private removeChildren;
+        private renderMenu;
+        private renderDropLine;
+        private onClickAddChildBtn;
+        private onClickMenuCard;
+        private renderMenuCard;
+        private changeChildrenVisibility;
         private setCardTitle;
         private onClickRemoveBtn;
         private onClickRenameBtn;

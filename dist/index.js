@@ -261,6 +261,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         constructor(parent, options) {
             super(parent, options);
+            this.expandedMenuItem = [];
             this.isEditing = false;
             this.noDataTxt = "No Pages";
         }
@@ -278,10 +279,9 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const data = this.getAttribute('data', true);
             this.redirectByCid = this.getAttribute('redirectByCid', true);
             store_1.pagesObject.data = data;
-            this.renderMenu();
+            this.renderMenu(true);
         }
-        initEventBus() {
-        }
+        initEventBus() { }
         initEventListener() {
             this.addEventListener('dragstart', (event) => {
                 const eventTarget = event.target;
@@ -427,19 +427,25 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const parentData = store_1.pagesObject.getPage(parentUUid);
             if (!parentData)
                 return;
+            if (!this.expandedMenuItem.includes(parentUUid))
+                this.expandedMenuItem = this.expandedMenuItem.filter(item => item !== parentUUid);
             const childrenList = parentData.pages;
             for (let i = childrenList.length - 1; i >= 0; i--) {
                 const isExist = this.pnlMenu.querySelector(`[uuid="${childrenList[i].uuid}"]`);
                 if (!isExist) {
                     const nextLevel = parseInt(parentElm.getAttribute('level'));
-                    const childElm = this.renderMenuCard(childrenList[i].uuid, childrenList[i].name, childrenList[i].cid, false, nextLevel + 1);
+                    const childElm = this.renderMenuCard(childrenList[i].uuid, nextLevel + 1);
                     childElm.setAttribute('parentUUid', parentUUid);
                     parentElmWrapper.parentElement.insertBefore(childElm, parentElmWrapper.nextSibling);
+                    if (this.expandedMenuItem.includes(childrenList[i].uuid))
+                        this.renderChildren(childrenList[i].uuid);
                 }
             }
         }
         removeChildren(parentUUid) {
             const childElms = this.pnlMenu.querySelectorAll(`[parentuuid="${parentUUid}"]`);
+            if (this.expandedMenuItem.includes(parentUUid))
+                this.expandedMenuItem.push(parentUUid);
             for (const childElm of childElms) {
                 const grandChildElmExist = this.pnlMenu.querySelector(`[parentuuid="${childElm.querySelector('#menuCard').getAttribute('uuid')}"]`);
                 if (grandChildElmExist)
@@ -447,7 +453,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 childElm.remove();
             }
         }
-        renderMenu() {
+        renderMenu(firstHierarichyExpand = false) {
             this.pnlMenu.clearInnerHTML();
             const items = store_1.pagesObject.data.pages.map((page) => {
                 return {
@@ -463,14 +469,14 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 this.pnlMenu.appendChild(txt);
                 return;
             }
-            // set the titles here
             const firstDropLine = this.renderDropLine('start');
             this.pnlMenu.appendChild(firstDropLine);
             for (let i = 0; i < items.length; i++) {
-                const isActive = this.activePageUUid == items[i].uuid;
-                const menuCardWrapper = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0);
+                // const isActive = this.activePageUUid == items[i].uuid;
+                const menuCardWrapper = this.renderMenuCard(items[i].uuid, 0);
                 this.pnlMenu.appendChild(menuCardWrapper);
-                if (items[i].children && items[i].children.length > 0)
+                if (items[i].children && items[i].children.length > 0 &&
+                    (this.expandedMenuItem.includes(items[i].uuid) || firstHierarichyExpand))
                     this.renderChildren(items[i].uuid);
             }
         }
@@ -484,21 +490,27 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 cid: '',
                 url: ''
             }, parentUuid);
+            this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
-            this.renderChildren(parentUuid);
         }
         onClickMenuCard(uuid) {
             const page = store_1.pagesObject.getPage(uuid);
+            this.activePageUUid = uuid;
             if (page.cid)
                 this.redirect(page.uuid, page.cid);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
         }
-        renderMenuCard(uuid, name, cid, isActive, level) {
+        renderMenuCard(uuid, level) {
+            const page = store_1.pagesObject.getPage(uuid);
+            const isActive = uuid == this.activePageUUid;
+            const hasChildren = page.pages && page.pages.length && page.pages.length > 0;
+            const expanded = this.expandedMenuItem.includes(uuid);
+            const iconName = !hasChildren ? 'dot-circle' : expanded ? 'angle-down' : 'angle-right';
             const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start' },
-                    this.$render("i-label", { id: "cardDot", caption: "•", font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8 + level * 8, right: 8 }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
-                    this.$render("i-label", { id: "cardTitle", caption: name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
+                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '16px', height: '16px', font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8 + level * 8, right: 8 }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
+                    this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
                 this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
                     this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
@@ -509,7 +521,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                     this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
             menuCard.setAttribute('uuid', uuid);
             menuCard.setAttribute('draggable', 'true');
-            menuCard.setAttribute('cid', cid);
+            menuCard.setAttribute('cid', page.cid);
             menuCard.setAttribute('level', level);
             this.initMenuCardEventListener(menuCard);
             const dropLine = this.renderDropLine(uuid);
@@ -521,10 +533,12 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         changeChildrenVisibility(uuid) {
             const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
             if (isChildExist) {
-                this.removeChildren(uuid);
+                this.expandedMenuItem = this.expandedMenuItem.filter(e => e !== uuid);
+                this.renderMenu();
             }
             else {
-                this.renderChildren(uuid);
+                this.expandedMenuItem.push(uuid);
+                this.renderMenu();
             }
         }
         setCardTitle(uuid) {
@@ -570,7 +584,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             editBtnStack.visible = toggle;
         }
         redirect(uuid, cid) {
-            this.activePageUUid = uuid;
             if (this.redirectByCid)
                 this.redirectByCid(cid);
         }

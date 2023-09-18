@@ -36,6 +36,7 @@ declare global {
 @customElements('i-scom-pages-menu')
 export default class ScomPagesMenu extends Module {
   private redirectByCid: RedirectByCid;
+  private expandedMenuItem: string[] = [];
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -71,12 +72,10 @@ export default class ScomPagesMenu extends Module {
     const data = this.getAttribute('data', true);
     this.redirectByCid = this.getAttribute('redirectByCid', true);
     pagesObject.data = data;
-    this.renderMenu();
+    this.renderMenu(true);
   }
 
-  private initEventBus() {
-
-  }
+  private initEventBus() { }
 
   private initEventListener() {
     this.addEventListener('dragstart', (event) => {
@@ -132,7 +131,7 @@ export default class ScomPagesMenu extends Module {
     });
   }
 
-  setfocusCard(uuid: string) {
+  private setfocusCard(uuid: string) {
     this.focusedPageId = uuid;
     const menuCards = this.pnlMenu.querySelectorAll('#menuCard');
     for (let i = 0; i < menuCards.length; i++) {
@@ -217,27 +216,30 @@ export default class ScomPagesMenu extends Module {
     }
   }
 
-  renderChildren(parentUUid: string) {
+  private renderChildren(parentUUid: string) {
     if (!parentUUid) return;
     const parentElm = this.pnlMenu.querySelector(`[uuid="${parentUUid}"]`);
     const parentElmWrapper = parentElm.parentElement;
     const parentData = pagesObject.getPage(parentUUid);
     if (!parentData) return;
 
+    if (!this.expandedMenuItem.includes(parentUUid)) this.expandedMenuItem = this.expandedMenuItem.filter(item => item !== parentUUid);
     const childrenList = parentData.pages;
     for (let i = childrenList.length - 1; i >= 0; i--) {
       const isExist = this.pnlMenu.querySelector(`[uuid="${childrenList[i].uuid}"]`);
       if (!isExist) {
         const nextLevel = parseInt(parentElm.getAttribute('level'));
-        const childElm = this.renderMenuCard(childrenList[i].uuid, childrenList[i].name, childrenList[i].cid, false, nextLevel + 1);
+        const childElm = this.renderMenuCard(childrenList[i].uuid, nextLevel + 1);
         childElm.setAttribute('parentUUid', parentUUid);
         parentElmWrapper.parentElement.insertBefore(childElm, parentElmWrapper.nextSibling);
+        if (this.expandedMenuItem.includes(childrenList[i].uuid)) this.renderChildren(childrenList[i].uuid);
       }
     }
   }
 
-  removeChildren(parentUUid: string) {
+  private removeChildren(parentUUid: string) {
     const childElms = this.pnlMenu.querySelectorAll(`[parentuuid="${parentUUid}"]`);
+    if (this.expandedMenuItem.includes(parentUUid)) this.expandedMenuItem.push(parentUUid);
     for (const childElm of childElms) {
       const grandChildElmExist = this.pnlMenu.querySelector(`[parentuuid="${childElm.querySelector('#menuCard').getAttribute('uuid')}"]`);
       if (grandChildElmExist) this.removeChildren(childElm.querySelector('#menuCard').getAttribute('uuid'));
@@ -245,7 +247,7 @@ export default class ScomPagesMenu extends Module {
     }
   }
 
-  renderMenu() {
+  private renderMenu(firstHierarichyExpand: boolean = false) {
     this.pnlMenu.clearInnerHTML();
     const items = pagesObject.data.pages.map((page: IPageData) => {
       return {
@@ -275,40 +277,47 @@ export default class ScomPagesMenu extends Module {
       return;
     }
 
-    // set the titles here
     const firstDropLine = this.renderDropLine('start');
     this.pnlMenu.appendChild(firstDropLine);
 
     for (let i = 0; i < items.length; i++) {
-      const isActive = this.activePageUUid == items[i].uuid;
-      const menuCardWrapper = this.renderMenuCard(items[i].uuid, items[i].caption, items[i].cid, isActive, 0)
+      // const isActive = this.activePageUUid == items[i].uuid;
+      const menuCardWrapper = this.renderMenuCard(items[i].uuid, 0)
       this.pnlMenu.appendChild(menuCardWrapper);
-      if (items[i].children && items[i].children.length > 0) this.renderChildren(items[i].uuid);
+      if (items[i].children && items[i].children.length > 0 &&
+        (this.expandedMenuItem.includes(items[i].uuid) || firstHierarichyExpand))
+        this.renderChildren(items[i].uuid);
     }
   }
 
-  renderDropLine(uuid: string) {
+  private renderDropLine(uuid: string) {
     return <i-panel id={`menuDropLine-${uuid}`} width={'100%'} height={'5px'}></i-panel>
   }
 
-  onClickAddChildBtn(parentUuid: string) {
+  private onClickAddChildBtn(parentUuid: string) {
     pagesObject.addPage({
       uuid: generateUUID(),
       name: 'Untitled page',
       cid: '',
       url: ''
     }, parentUuid)
+    this.expandedMenuItem.push(parentUuid);
     this.renderMenu();
-    this.renderChildren(parentUuid);
   }
 
-  onClickMenuCard(uuid: string) {
+  private onClickMenuCard(uuid: string) {
     const page = pagesObject.getPage(uuid);
+    this.activePageUUid = uuid;
     if (page.cid) this.redirect(page.uuid, page.cid);
     if (page.pages) this.changeChildrenVisibility(uuid);
   }
 
-  renderMenuCard(uuid: string, name: string, cid: string, isActive: boolean, level: number) {
+  private renderMenuCard(uuid: string, level: number) {
+    const page = pagesObject.getPage(uuid);
+    const isActive = uuid == this.activePageUUid;
+    const hasChildren = page.pages && page.pages.length && page.pages.length > 0;
+    const expanded = this.expandedMenuItem.includes(uuid);
+    const iconName = !hasChildren ? 'dot-circle' : expanded ? 'angle-down' : 'angle-right';
     const menuCard = (
       <i-hstack
         id="menuCard"
@@ -321,7 +330,18 @@ export default class ScomPagesMenu extends Module {
         onClick={() => this.onClickMenuCard(uuid)}
       >
         <i-hstack verticalAlignment="center" horizontalAlignment='start'>
-          <i-label
+          <i-icon
+            id="cardIcon"
+            name={iconName}
+            width={'10px'}
+            height={'10px'}
+            font={{ size: '16px', color: '#3b3838', weight: 530 }}
+            padding={{ left: 8 + level * 8 }}
+            maxHeight={34}
+            overflow={"hidden"}
+            class={isActive ? "focused-card" : ""}
+          ></i-icon>
+          {/* <i-label
             id="cardDot"
             caption={"•"}
             font={{ size: '16px', color: '#3b3838', weight: 530 }}
@@ -329,10 +349,10 @@ export default class ScomPagesMenu extends Module {
             maxHeight={34}
             overflow={"hidden"}
             class={isActive ? "focused-card" : ""}
-          ></i-label>
+          ></i-label> */}
           <i-label
             id="cardTitle"
-            caption={name}
+            caption={page.name}
             font={{ size: '16px', color: '#3b3838', weight: 530 }}
             padding={{ top: 8, bottom: 8, left: 8, right: 8 }}
             maxHeight={34}
@@ -408,7 +428,7 @@ export default class ScomPagesMenu extends Module {
     );
     menuCard.setAttribute('uuid', uuid);
     menuCard.setAttribute('draggable', 'true');
-    menuCard.setAttribute('cid', cid);
+    menuCard.setAttribute('cid', page.cid);
     menuCard.setAttribute('level', level);
     this.initMenuCardEventListener(menuCard);
 
@@ -422,12 +442,14 @@ export default class ScomPagesMenu extends Module {
     return menuWrapper;
   }
 
-  changeChildrenVisibility(uuid: string) {
+  private changeChildrenVisibility(uuid: string) {
     const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
     if (isChildExist) {
-      this.removeChildren(uuid);
+      this.expandedMenuItem = this.expandedMenuItem.filter(e => e !== uuid);
+      this.renderMenu();
     } else {
-      this.renderChildren(uuid);
+      this.expandedMenuItem.push(uuid);
+      this.renderMenu();
     }
   }
 
@@ -485,7 +507,6 @@ export default class ScomPagesMenu extends Module {
   }
 
   private redirect(uuid: string, cid: string) {
-    this.activePageUUid = uuid;
     if (this.redirectByCid) this.redirectByCid(cid);
   }
 
