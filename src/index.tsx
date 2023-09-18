@@ -247,8 +247,15 @@ export default class ScomPagesMenu extends Module {
     }
   }
 
-  private renderMenu(firstHierarichyExpand: boolean = false) {
+  renderMenu(firstHierarichyExpand: boolean = false) {
     this.pnlMenu.clearInnerHTML();
+    if (firstHierarichyExpand) {
+      const firstHierarichyPages = pagesObject.data.pages.map(p => p.uuid)
+      firstHierarichyPages.forEach(i => {
+        if (!this.expandedMenuItem.includes(i)) this.expandedMenuItem.push(i);
+      })
+    }
+
     const items = pagesObject.data.pages.map((page: IPageData) => {
       return {
         caption: page.name || "Untitled Page",
@@ -285,7 +292,7 @@ export default class ScomPagesMenu extends Module {
       const menuCardWrapper = this.renderMenuCard(items[i].uuid, 0)
       this.pnlMenu.appendChild(menuCardWrapper);
       if (items[i].children && items[i].children.length > 0 &&
-        (this.expandedMenuItem.includes(items[i].uuid) || firstHierarichyExpand))
+        this.expandedMenuItem.includes(items[i].uuid))
         this.renderChildren(items[i].uuid);
     }
   }
@@ -310,6 +317,7 @@ export default class ScomPagesMenu extends Module {
     this.activePageUUid = uuid;
     if (page.cid) this.redirect(page.uuid, page.cid);
     if (page.pages) this.changeChildrenVisibility(uuid);
+    this.renderMenu();
   }
 
   private renderMenuCard(uuid: string, level: number) {
@@ -317,7 +325,9 @@ export default class ScomPagesMenu extends Module {
     const isActive = uuid == this.activePageUUid;
     const hasChildren = page.pages && page.pages.length && page.pages.length > 0;
     const expanded = this.expandedMenuItem.includes(uuid);
-    const iconName = !hasChildren ? 'dot-circle' : expanded ? 'angle-down' : 'angle-right';
+    const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
+    const iconHeight = !hasChildren ? '5px' : '15px';
+    const marginLeft = (level * 1).toString() + 'rem';
     const menuCard = (
       <i-hstack
         id="menuCard"
@@ -329,27 +339,17 @@ export default class ScomPagesMenu extends Module {
         overflow="hidden"
         onClick={() => this.onClickMenuCard(uuid)}
       >
-        <i-hstack verticalAlignment="center" horizontalAlignment='start'>
+        <i-hstack verticalAlignment="center" horizontalAlignment='start' overflow={'hidden'}>
           <i-icon
             id="cardIcon"
             name={iconName}
-            width={'10px'}
-            height={'10px'}
-            font={{ size: '16px', color: '#3b3838', weight: 530 }}
-            padding={{ left: 8 + level * 8 }}
+            width={'15px'}
+            height={iconHeight}
+            margin={{ left: marginLeft }}
             maxHeight={34}
             overflow={"hidden"}
             class={isActive ? "focused-card" : ""}
           ></i-icon>
-          {/* <i-label
-            id="cardDot"
-            caption={"•"}
-            font={{ size: '16px', color: '#3b3838', weight: 530 }}
-            padding={{ top: 8, bottom: 8, left: 8 + level * 8, right: 8 }}
-            maxHeight={34}
-            overflow={"hidden"}
-            class={isActive ? "focused-card" : ""}
-          ></i-label> */}
           <i-label
             id="cardTitle"
             caption={page.name}
@@ -446,10 +446,8 @@ export default class ScomPagesMenu extends Module {
     const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
     if (isChildExist) {
       this.expandedMenuItem = this.expandedMenuItem.filter(e => e !== uuid);
-      this.renderMenu();
     } else {
       this.expandedMenuItem.push(uuid);
-      this.renderMenu();
     }
   }
 

@@ -77,7 +77,7 @@ declare module "@scom/scom-pages-menu" {
         private setActiveDropLine;
         private renderChildren;
         private removeChildren;
-        private renderMenu;
+        renderMenu(firstHierarichyExpand?: boolean): void;
         private renderDropLine;
         private onClickAddChildBtn;
         private onClickMenuCard;

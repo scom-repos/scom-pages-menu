@@ -455,6 +455,13 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         renderMenu(firstHierarichyExpand = false) {
             this.pnlMenu.clearInnerHTML();
+            if (firstHierarichyExpand) {
+                const firstHierarichyPages = store_1.pagesObject.data.pages.map(p => p.uuid);
+                firstHierarichyPages.forEach(i => {
+                    if (!this.expandedMenuItem.includes(i))
+                        this.expandedMenuItem.push(i);
+                });
+            }
             const items = store_1.pagesObject.data.pages.map((page) => {
                 return {
                     caption: page.name || "Untitled Page",
@@ -476,7 +483,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 const menuCardWrapper = this.renderMenuCard(items[i].uuid, 0);
                 this.pnlMenu.appendChild(menuCardWrapper);
                 if (items[i].children && items[i].children.length > 0 &&
-                    (this.expandedMenuItem.includes(items[i].uuid) || firstHierarichyExpand))
+                    this.expandedMenuItem.includes(items[i].uuid))
                     this.renderChildren(items[i].uuid);
             }
         }
@@ -500,16 +507,19 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 this.redirect(page.uuid, page.cid);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
+            this.renderMenu();
         }
         renderMenuCard(uuid, level) {
             const page = store_1.pagesObject.getPage(uuid);
             const isActive = uuid == this.activePageUUid;
             const hasChildren = page.pages && page.pages.length && page.pages.length > 0;
             const expanded = this.expandedMenuItem.includes(uuid);
-            const iconName = !hasChildren ? 'dot-circle' : expanded ? 'angle-down' : 'angle-right';
+            const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
+            const iconHeight = !hasChildren ? '5px' : '15px';
+            const marginLeft = (level * 1).toString() + 'rem';
             const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
-                this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start' },
-                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '16px', height: '16px', font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8 + level * 8, right: 8 }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
+                this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start', overflow: 'hidden' },
+                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
                     this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
                 this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
@@ -534,11 +544,9 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const isChildExist = this.pnlMenu.querySelector(`[parentUUid="${uuid}"]`);
             if (isChildExist) {
                 this.expandedMenuItem = this.expandedMenuItem.filter(e => e !== uuid);
-                this.renderMenu();
             }
             else {
                 this.expandedMenuItem.push(uuid);
-                this.renderMenu();
             }
         }
         setCardTitle(uuid) {
