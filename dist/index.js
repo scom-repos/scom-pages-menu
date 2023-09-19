@@ -277,7 +277,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.initEventBus();
             this.initEventListener();
             const data = this.getAttribute('data', true);
-            this.redirectByCid = this.getAttribute('redirectByCid', true);
+            this.onChangedPage = this.getAttribute('onChangedPage', true);
             store_1.pagesObject.data = data;
             this.renderMenu(true);
         }
@@ -494,17 +494,17 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             store_1.pagesObject.addPage({
                 uuid: (0, utils_1.generateUUID)(),
                 name: 'Untitled page',
-                cid: '',
+                cid: 'init-cid',
                 url: ''
             }, parentUuid);
             this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
         }
-        onClickMenuCard(uuid) {
+        onClickMenuCard(uuid, currPage) {
             const page = store_1.pagesObject.getPage(uuid);
             this.activePageUUid = uuid;
-            if (page.cid)
-                this.redirect(page.uuid, page.cid);
+            if (page.cid && this.onChangedPage)
+                this.onChangedPage(page, currPage);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
             this.renderMenu();
@@ -517,7 +517,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
             const iconHeight = !hasChildren ? '5px' : '15px';
             const marginLeft = (level * 1).toString() + 'rem';
-            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
+            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid, page) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start', overflow: 'hidden' },
                     this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
                     this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
@@ -590,10 +590,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             actionBtnStack.visible = !toggle;
             const editBtnStack = currCard.querySelector('#editBtnStack');
             editBtnStack.visible = toggle;
-        }
-        redirect(uuid, cid) {
-            if (this.redirectByCid)
-                this.redirectByCid(cid);
         }
         render() {
             return (this.$render("i-vstack", { gap: "0.5rem", background: { color: "#FAFAFA" }, height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },

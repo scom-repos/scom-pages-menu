@@ -40,11 +40,11 @@ declare module "@scom/scom-pages-menu/utils.ts" {
 /// <amd-module name="@scom/scom-pages-menu" />
 declare module "@scom/scom-pages-menu" {
     import { Module, ControlElement, Container } from '@ijstech/components';
-    import { IPagesMenu } from "@scom/scom-pages-menu/interface.ts";
-    type RedirectByCid = (cid: string) => void;
+    import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
+    type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
     interface ScomPagesMenuElement extends ControlElement {
         data: IPagesMenu;
-        redirectByCid: RedirectByCid;
+        onChangedPage: OnChangedPage;
     }
     global {
         namespace JSX {
@@ -54,7 +54,7 @@ declare module "@scom/scom-pages-menu" {
         }
     }
     export default class ScomPagesMenu extends Module {
-        private redirectByCid;
+        private onChangedPage;
         private expandedMenuItem;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
@@ -90,7 +90,6 @@ declare module "@scom/scom-pages-menu" {
         private onClickCancelBtn;
         private toggleRenameBtn;
         private toggleEditor;
-        private redirect;
         render(): any;
     }
 }

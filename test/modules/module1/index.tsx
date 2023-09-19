@@ -15,12 +15,15 @@ export default class Module1 extends Module {
         super.init();
     }
 
-    testFunction() { }
+    testFunction(newPage: any, oldPage: any) {
+        console.log("newPage", newPage)
+        console.log("oldPage", oldPage)
+    }
 
     render() {
         return <i-panel>
 
-            <i-scom-pages-menu id="menu" data={data} redirectByCid={this.testFunction} width="300px" display={'block'}></i-scom-pages-menu>
+            <i-scom-pages-menu id="menu" data={data} width="300px" display={'block'} onChangedPage={this.testFunction}></i-scom-pages-menu>
 
         </i-panel>
     }

@@ -17,11 +17,11 @@ import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
-type RedirectByCid = (cid: string) => void;
+type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
 
 interface ScomPagesMenuElement extends ControlElement {
   data: IPagesMenu,
-  redirectByCid: RedirectByCid
+  onChangedPage: OnChangedPage
 }
 
 declare global {
@@ -35,7 +35,7 @@ declare global {
 @customModule
 @customElements('i-scom-pages-menu')
 export default class ScomPagesMenu extends Module {
-  private redirectByCid: RedirectByCid;
+  private onChangedPage: OnChangedPage;
   private expandedMenuItem: string[] = [];
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
@@ -70,7 +70,7 @@ export default class ScomPagesMenu extends Module {
     this.initEventBus();
     this.initEventListener();
     const data = this.getAttribute('data', true);
-    this.redirectByCid = this.getAttribute('redirectByCid', true);
+    this.onChangedPage = this.getAttribute('onChangedPage', true);
     pagesObject.data = data;
     this.renderMenu(true);
   }
@@ -305,17 +305,17 @@ export default class ScomPagesMenu extends Module {
     pagesObject.addPage({
       uuid: generateUUID(),
       name: 'Untitled page',
-      cid: '',
+      cid: 'init-cid',
       url: ''
     }, parentUuid)
     this.expandedMenuItem.push(parentUuid);
     this.renderMenu();
   }
 
-  private onClickMenuCard(uuid: string) {
+  private onClickMenuCard(uuid: string, currPage: IPageData) {
     const page = pagesObject.getPage(uuid);
     this.activePageUUid = uuid;
-    if (page.cid) this.redirect(page.uuid, page.cid);
+    if (page.cid && this.onChangedPage) this.onChangedPage(page, currPage);
     if (page.pages) this.changeChildrenVisibility(uuid);
     this.renderMenu();
   }
@@ -337,7 +337,7 @@ export default class ScomPagesMenu extends Module {
         width="100%"
         border={{ radius: 5 }}
         overflow="hidden"
-        onClick={() => this.onClickMenuCard(uuid)}
+        onClick={() => this.onClickMenuCard(uuid, page)}
       >
         <i-hstack verticalAlignment="center" horizontalAlignment='start' overflow={'hidden'}>
           <i-icon
@@ -502,10 +502,6 @@ export default class ScomPagesMenu extends Module {
     (actionBtnStack as HStack).visible = !toggle;
     const editBtnStack = currCard.querySelector('#editBtnStack') as HStack;
     editBtnStack.visible = toggle;
-  }
-
-  private redirect(uuid: string, cid: string) {
-    if (this.redirectByCid) this.redirectByCid(cid);
   }
 
   render() {
