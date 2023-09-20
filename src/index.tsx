@@ -13,6 +13,7 @@ import {
 } from '@ijstech/components';
 import { iconButtonStyle, menuCardStyle, menuStyle } from './index.css';
 import { IPagesMenu, IPageData } from './interface'
+export { IPagesMenu, IPageData } from './interface'
 import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
@@ -63,11 +64,11 @@ export default class ScomPagesMenu extends Module {
     this.renderMenu();
   }
 
-  get currentPageUuid() {
+  get activePageUuid() {
     return this._activePageUuid;
   }
 
-  set currentPageUuid(value: string) {
+  set activePageUuid(value: string) {
     this._activePageUuid = value;
   }
 
@@ -269,7 +270,6 @@ export default class ScomPagesMenu extends Module {
     const items = pagesObject.data.pages.map((page: IPageData) => {
       return {
         caption: page.name || "Untitled Page",
-        cid: page.cid,
         uuid: page.uuid,
         children: page.pages
       };
@@ -315,8 +315,6 @@ export default class ScomPagesMenu extends Module {
     pagesObject.addPage({
       uuid: generateUUID(),
       name: 'Untitled page',
-      cid: 'init-cid',
-      url: ''
     }, parentUuid)
     this.expandedMenuItem.push(parentUuid);
     this.renderMenu();
@@ -326,7 +324,7 @@ export default class ScomPagesMenu extends Module {
     const page = pagesObject.getPage(uuid);
     const currPage = pagesObject.getPage(this._activePageUuid);
     this._activePageUuid = uuid;
-    if (page.cid && this.onChangedPage) this.onChangedPage(page, currPage);
+    if (this.onChangedPage) this.onChangedPage(page, currPage);
     if (page.pages) this.changeChildrenVisibility(uuid);
     this.renderMenu();
   }
@@ -359,6 +357,7 @@ export default class ScomPagesMenu extends Module {
             margin={{ left: marginLeft }}
             maxHeight={34}
             overflow={"hidden"}
+            fill={'#3b3838'}
             class={isActive ? "focused-card" : ""}
           ></i-icon>
           <i-label
@@ -439,7 +438,6 @@ export default class ScomPagesMenu extends Module {
     );
     menuCard.setAttribute('uuid', uuid);
     menuCard.setAttribute('draggable', 'true');
-    menuCard.setAttribute('cid', page.cid);
     menuCard.setAttribute('level', level);
     this.initMenuCardEventListener(menuCard);
 

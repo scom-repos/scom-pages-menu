@@ -9,8 +9,6 @@ declare module "@scom/scom-pages-menu/interface.ts" {
     export interface IPageData {
         uuid: string;
         name: string;
-        cid?: string;
-        url?: string;
         pages?: IPageData[];
     }
     export interface IPagesMenu {
@@ -41,6 +39,7 @@ declare module "@scom/scom-pages-menu/utils.ts" {
 declare module "@scom/scom-pages-menu" {
     import { Module, ControlElement, Container } from '@ijstech/components';
     import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
+    export { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
     type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
     interface ScomPagesMenuElement extends ControlElement {
         data: IPagesMenu;
@@ -66,8 +65,8 @@ declare module "@scom/scom-pages-menu" {
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         get data(): IPagesMenu;
         set data(value: IPagesMenu);
-        get currentPageUuid(): string;
-        set currentPageUuid(value: string);
+        get activePageUuid(): string;
+        set activePageUuid(value: string);
         private noDataTxt;
         init(): void;
         private initEventBus;

@@ -62,9 +62,6 @@ export class PagesObject {
                 if (newName !== undefined) {
                     currentPage.name = newName;
                 }
-                if (newCid !== undefined) {
-                    currentPage.cid = newCid;
-                }
                 if (newPages !== undefined) {
                     currentPage.pages = newPages;
                 }

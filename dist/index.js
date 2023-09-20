@@ -121,9 +121,6 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                     if (newName !== undefined) {
                         currentPage.name = newName;
                     }
-                    if (newCid !== undefined) {
-                        currentPage.cid = newCid;
-                    }
                     if (newPages !== undefined) {
                         currentPage.pages = newPages;
                     }
@@ -272,10 +269,10 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             store_1.pagesObject.data = value;
             this.renderMenu();
         }
-        get currentPageUuid() {
+        get activePageUuid() {
             return this._activePageUuid;
         }
-        set currentPageUuid(value) {
+        set activePageUuid(value) {
             this._activePageUuid = value;
         }
         init() {
@@ -474,7 +471,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const items = store_1.pagesObject.data.pages.map((page) => {
                 return {
                     caption: page.name || "Untitled Page",
-                    cid: page.cid,
                     uuid: page.uuid,
                     children: page.pages
                 };
@@ -503,8 +499,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             store_1.pagesObject.addPage({
                 uuid: (0, utils_1.generateUUID)(),
                 name: 'Untitled page',
-                cid: 'init-cid',
-                url: ''
             }, parentUuid);
             this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
@@ -513,7 +507,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const page = store_1.pagesObject.getPage(uuid);
             const currPage = store_1.pagesObject.getPage(this._activePageUuid);
             this._activePageUuid = uuid;
-            if (page.cid && this.onChangedPage)
+            if (this.onChangedPage)
                 this.onChangedPage(page, currPage);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
@@ -529,7 +523,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const marginLeft = (level * 1).toString() + 'rem';
             const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start', overflow: 'hidden' },
-                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
+                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", fill: '#3b3838', class: isActive ? "focused-card" : "" }),
                     this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
                 this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
@@ -541,7 +535,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                     this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
             menuCard.setAttribute('uuid', uuid);
             menuCard.setAttribute('draggable', 'true');
-            menuCard.setAttribute('cid', page.cid);
             menuCard.setAttribute('level', level);
             this.initMenuCardEventListener(menuCard);
             const dropLine = this.renderDropLine(uuid);
