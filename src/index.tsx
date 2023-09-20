@@ -21,6 +21,7 @@ type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
 
 interface ScomPagesMenuElement extends ControlElement {
   data: IPagesMenu,
+  activePageUuid?: string,
   onChangedPage: OnChangedPage
 }
 
@@ -37,6 +38,11 @@ declare global {
 export default class ScomPagesMenu extends Module {
   private onChangedPage: OnChangedPage;
   private expandedMenuItem: string[] = [];
+  private pnlMenu: VStack;
+  private draggingPageUUid: string;
+  private isEditing: boolean = false;
+  private focusedPageId: string;
+  private _activePageUuid: string;
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -57,11 +63,13 @@ export default class ScomPagesMenu extends Module {
     this.renderMenu();
   }
 
-  private pnlMenu: VStack;
-  private draggingPageUUid: string;
-  private isEditing: boolean = false;
-  private focusedPageId: string;
-  private activePageUUid: string;
+  get currentPageUuid() {
+    return this._activePageUuid;
+  }
+
+  set currentPageUuid(value: string) {
+    this._activePageUuid = value;
+  }
 
   private noDataTxt = "No Pages";
 
@@ -70,8 +78,10 @@ export default class ScomPagesMenu extends Module {
     this.initEventBus();
     this.initEventListener();
     const data = this.getAttribute('data', true);
+    this._activePageUuid = this.getAttribute('activePageUuid', true);
     this.onChangedPage = this.getAttribute('onChangedPage', true);
     pagesObject.data = data;
+    if (!this._activePageUuid) this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
     this.renderMenu(true);
   }
 
@@ -312,9 +322,10 @@ export default class ScomPagesMenu extends Module {
     this.renderMenu();
   }
 
-  private onClickMenuCard(uuid: string, currPage: IPageData) {
+  private onClickMenuCard(uuid: string) {
     const page = pagesObject.getPage(uuid);
-    this.activePageUUid = uuid;
+    const currPage = pagesObject.getPage(this._activePageUuid);
+    this._activePageUuid = uuid;
     if (page.cid && this.onChangedPage) this.onChangedPage(page, currPage);
     if (page.pages) this.changeChildrenVisibility(uuid);
     this.renderMenu();
@@ -322,7 +333,7 @@ export default class ScomPagesMenu extends Module {
 
   private renderMenuCard(uuid: string, level: number) {
     const page = pagesObject.getPage(uuid);
-    const isActive = uuid == this.activePageUUid;
+    const isActive = uuid == this._activePageUuid;
     const hasChildren = page.pages && page.pages.length && page.pages.length > 0;
     const expanded = this.expandedMenuItem.includes(uuid);
     const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
@@ -337,7 +348,7 @@ export default class ScomPagesMenu extends Module {
         width="100%"
         border={{ radius: 5 }}
         overflow="hidden"
-        onClick={() => this.onClickMenuCard(uuid, page)}
+        onClick={() => this.onClickMenuCard(uuid)}
       >
         <i-hstack verticalAlignment="center" horizontalAlignment='start' overflow={'hidden'}>
           <i-icon

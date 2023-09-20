@@ -272,13 +272,22 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             store_1.pagesObject.data = value;
             this.renderMenu();
         }
+        get currentPageUuid() {
+            return this._activePageUuid;
+        }
+        set currentPageUuid(value) {
+            this._activePageUuid = value;
+        }
         init() {
             super.init();
             this.initEventBus();
             this.initEventListener();
             const data = this.getAttribute('data', true);
+            this._activePageUuid = this.getAttribute('activePageUuid', true);
             this.onChangedPage = this.getAttribute('onChangedPage', true);
             store_1.pagesObject.data = data;
+            if (!this._activePageUuid)
+                this._activePageUuid = store_1.pagesObject.data.pages ? store_1.pagesObject.data.pages[0].uuid : undefined;
             this.renderMenu(true);
         }
         initEventBus() { }
@@ -500,9 +509,10 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
         }
-        onClickMenuCard(uuid, currPage) {
+        onClickMenuCard(uuid) {
             const page = store_1.pagesObject.getPage(uuid);
-            this.activePageUUid = uuid;
+            const currPage = store_1.pagesObject.getPage(this._activePageUuid);
+            this._activePageUuid = uuid;
             if (page.cid && this.onChangedPage)
                 this.onChangedPage(page, currPage);
             if (page.pages)
@@ -511,13 +521,13 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         renderMenuCard(uuid, level) {
             const page = store_1.pagesObject.getPage(uuid);
-            const isActive = uuid == this.activePageUUid;
+            const isActive = uuid == this._activePageUuid;
             const hasChildren = page.pages && page.pages.length && page.pages.length > 0;
             const expanded = this.expandedMenuItem.includes(uuid);
             const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
             const iconHeight = !hasChildren ? '5px' : '15px';
             const marginLeft = (level * 1).toString() + 'rem';
-            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid, page) },
+            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start', overflow: 'hidden' },
                     this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", class: isActive ? "focused-card" : "" }),
                     this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),

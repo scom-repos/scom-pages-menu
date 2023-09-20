@@ -44,6 +44,7 @@ declare module "@scom/scom-pages-menu" {
     type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
     interface ScomPagesMenuElement extends ControlElement {
         data: IPagesMenu;
+        activePageUuid?: string;
         onChangedPage: OnChangedPage;
     }
     global {
@@ -56,15 +57,17 @@ declare module "@scom/scom-pages-menu" {
     export default class ScomPagesMenu extends Module {
         private onChangedPage;
         private expandedMenuItem;
-        static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
-        constructor(parent?: Container, options?: ScomPagesMenuElement);
-        get data(): IPagesMenu;
-        set data(value: IPagesMenu);
         private pnlMenu;
         private draggingPageUUid;
         private isEditing;
         private focusedPageId;
-        private activePageUUid;
+        private _activePageUuid;
+        static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
+        constructor(parent?: Container, options?: ScomPagesMenuElement);
+        get data(): IPagesMenu;
+        set data(value: IPagesMenu);
+        get currentPageUuid(): string;
+        set currentPageUuid(value: string);
         private noDataTxt;
         init(): void;
         private initEventBus;
