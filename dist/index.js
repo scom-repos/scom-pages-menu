@@ -283,8 +283,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this._activePageUuid = this.getAttribute('activePageUuid', true);
             this.onChangedPage = this.getAttribute('onChangedPage', true);
             store_1.pagesObject.data = data;
-            if (!this._activePageUuid)
-                this._activePageUuid = store_1.pagesObject.data.pages ? store_1.pagesObject.data.pages[0].uuid : undefined;
             this.renderMenu(true);
         }
         initEventBus() { }
@@ -461,6 +459,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         renderMenu(firstHierarichyExpand = false) {
             this.pnlMenu.clearInnerHTML();
+            if (!this._activePageUuid && store_1.pagesObject.data.pages && store_1.pagesObject.data.pages[0] && store_1.pagesObject.data.pages[0].uuid)
+                this._activePageUuid = store_1.pagesObject.data.pages ? store_1.pagesObject.data.pages[0].uuid : undefined;
             if (firstHierarichyExpand) {
                 const firstHierarichyPages = store_1.pagesObject.data.pages.map(p => p.uuid);
                 firstHierarichyPages.forEach(i => {

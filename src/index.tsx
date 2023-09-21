@@ -82,7 +82,6 @@ export default class ScomPagesMenu extends Module {
     this._activePageUuid = this.getAttribute('activePageUuid', true);
     this.onChangedPage = this.getAttribute('onChangedPage', true);
     pagesObject.data = data;
-    if (!this._activePageUuid) this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
     this.renderMenu(true);
   }
 
@@ -260,6 +259,7 @@ export default class ScomPagesMenu extends Module {
 
   renderMenu(firstHierarichyExpand: boolean = false) {
     this.pnlMenu.clearInnerHTML();
+    if (!this._activePageUuid && pagesObject.data.pages && pagesObject.data.pages[0] && pagesObject.data.pages[0].uuid) this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
     if (firstHierarichyExpand) {
       const firstHierarichyPages = pagesObject.data.pages.map(p => p.uuid)
       firstHierarichyPages.forEach(i => {
