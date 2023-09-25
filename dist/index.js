@@ -269,6 +269,13 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             store_1.pagesObject.data = value;
             this.renderMenu();
         }
+        get mode() {
+            return this._mode;
+        }
+        set mode(value) {
+            this._mode = value;
+            this.renderMenu();
+        }
         get activePageUuid() {
             return this._activePageUuid;
         }
@@ -281,6 +288,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.initEventListener();
             const data = this.getAttribute('data', true);
             this._activePageUuid = this.getAttribute('activePageUuid', true);
+            this._mode = this.getAttribute('mode', true) || 'editor';
             this.onChangedPage = this.getAttribute('onChangedPage', true);
             store_1.pagesObject.data = data;
             this.renderMenu(true);
@@ -289,13 +297,15 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         initEventListener() {
             this.addEventListener('dragstart', (event) => {
                 const eventTarget = event.target;
-                if (!eventTarget || this.isEditing) {
+                if (!eventTarget || this.isEditing || this._mode == "viewer") {
                     event.preventDefault();
                     return;
                 }
                 this.draggingPageUUid = eventTarget.getAttribute('uuid');
             });
             this.addEventListener('dragend', (event) => {
+                if (this._mode == "viewer")
+                    return;
                 // remove all active drop line
                 if (!this.draggingPageUUid) {
                     event.preventDefault();
@@ -311,6 +321,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             });
             this.addEventListener('dragover', (event) => {
                 event.preventDefault();
+                if (this._mode == "viewer")
+                    return;
                 if (!this.draggingPageUUid) {
                     event.preventDefault();
                     return;
@@ -318,7 +330,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 this.showDropBox(event.clientX, event.clientY);
             });
             this.addEventListener('drop', (event) => {
-                if (!this.draggingPageUUid) {
+                if (!this.draggingPageUUid || this._mode == "viewer") {
                     event.preventDefault();
                     return;
                 }
@@ -326,12 +338,12 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         initMenuCardEventListener(card) {
             card.addEventListener('mouseenter', (event) => {
-                if (this.isEditing)
+                if (this.isEditing || this._mode == "viewer")
                     return;
                 this.toggleRenameBtn(card.getAttribute('uuid'), true);
             });
             card.addEventListener('mouseleave', (event) => {
-                if (this.isEditing)
+                if (this.isEditing || this._mode == "viewer")
                     return;
                 this.toggleRenameBtn(card.getAttribute('uuid'), false);
             });
@@ -459,6 +471,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         renderMenu(firstHierarichyExpand = false) {
             this.pnlMenu.clearInnerHTML();
+            if (this.btnAddRootPage)
+                this.btnAddRootPage.visible = this._mode == 'editor';
             if (!this._activePageUuid && store_1.pagesObject.data.pages && store_1.pagesObject.data.pages[0] && store_1.pagesObject.data.pages[0].uuid)
                 this._activePageUuid = store_1.pagesObject.data.pages ? store_1.pagesObject.data.pages[0].uuid : undefined;
             if (firstHierarichyExpand) {
@@ -600,7 +614,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             return (this.$render("i-vstack", { gap: "0.5rem", background: { color: "#FAFAFA" }, height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },
                 this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center', horizontalAlignment: 'space-between' },
                     this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" }),
-                    this.$render("i-icon", { name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null) })),
+                    this.$render("i-icon", { id: "btnAddRootPage", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null) })),
                 this.$render("i-vstack", { id: "pnlMenuWrapper", width: "100%" },
                     this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
         }

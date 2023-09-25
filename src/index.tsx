@@ -9,7 +9,8 @@ import {
   Label,
   VStack,
   Input,
-  HStack
+  HStack,
+  Button
 } from '@ijstech/components';
 import { iconButtonStyle, menuCardStyle, menuStyle } from './index.css';
 import { IPagesMenu, IPageData } from './interface'
@@ -19,10 +20,12 @@ import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
 type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
+type MenuMode = 'editor' | 'viewer';
 
 interface ScomPagesMenuElement extends ControlElement {
   data: IPagesMenu,
   activePageUuid?: string,
+  mode?: MenuMode,
   onChangedPage: OnChangedPage
 }
 
@@ -44,6 +47,8 @@ export default class ScomPagesMenu extends Module {
   private isEditing: boolean = false;
   private focusedPageId: string;
   private _activePageUuid: string;
+  private _mode: MenuMode;
+  private btnAddRootPage: Button;
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -64,6 +69,15 @@ export default class ScomPagesMenu extends Module {
     this.renderMenu();
   }
 
+  get mode() {
+    return this._mode;
+  }
+
+  set mode(value: MenuMode) {
+    this._mode = value;
+    this.renderMenu();
+  }
+
   get activePageUuid() {
     return this._activePageUuid;
   }
@@ -80,6 +94,7 @@ export default class ScomPagesMenu extends Module {
     this.initEventListener();
     const data = this.getAttribute('data', true);
     this._activePageUuid = this.getAttribute('activePageUuid', true);
+    this._mode = this.getAttribute('mode', true) || 'editor';
     this.onChangedPage = this.getAttribute('onChangedPage', true);
     pagesObject.data = data;
     this.renderMenu(true);
@@ -90,7 +105,7 @@ export default class ScomPagesMenu extends Module {
   private initEventListener() {
     this.addEventListener('dragstart', (event) => {
       const eventTarget = event.target as HTMLElement;
-      if (!eventTarget || this.isEditing) {
+      if (!eventTarget || this.isEditing || this._mode == "viewer") {
         event.preventDefault();
         return;
       }
@@ -98,6 +113,7 @@ export default class ScomPagesMenu extends Module {
     });
 
     this.addEventListener('dragend', (event) => {
+      if (this._mode == "viewer") return;
       // remove all active drop line
       if (!this.draggingPageUUid) {
         event.preventDefault();
@@ -115,6 +131,7 @@ export default class ScomPagesMenu extends Module {
 
     this.addEventListener('dragover', (event) => {
       event.preventDefault();
+      if (this._mode == "viewer") return;
       if (!this.draggingPageUUid) {
         event.preventDefault();
         return;
@@ -123,7 +140,7 @@ export default class ScomPagesMenu extends Module {
     });
 
     this.addEventListener('drop', (event) => {
-      if (!this.draggingPageUUid) {
+      if (!this.draggingPageUUid || this._mode == "viewer") {
         event.preventDefault();
         return;
       }
@@ -132,11 +149,11 @@ export default class ScomPagesMenu extends Module {
 
   private initMenuCardEventListener(card: Control) {
     card.addEventListener('mouseenter', (event) => {
-      if (this.isEditing) return;
+      if (this.isEditing || this._mode == "viewer") return;
       this.toggleRenameBtn(card.getAttribute('uuid'), true);
     });
     card.addEventListener('mouseleave', (event) => {
-      if (this.isEditing) return;
+      if (this.isEditing || this._mode == "viewer") return;
       this.toggleRenameBtn(card.getAttribute('uuid'), false);
     });
   }
@@ -259,7 +276,9 @@ export default class ScomPagesMenu extends Module {
 
   renderMenu(firstHierarichyExpand: boolean = false) {
     this.pnlMenu.clearInnerHTML();
-    if (!this._activePageUuid && pagesObject.data.pages && pagesObject.data.pages[0] && pagesObject.data.pages[0].uuid) this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
+    if (this.btnAddRootPage) this.btnAddRootPage.visible = this._mode == 'editor';
+    if (!this._activePageUuid && pagesObject.data.pages && pagesObject.data.pages[0] && pagesObject.data.pages[0].uuid) 
+      this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
     if (firstHierarichyExpand) {
       const firstHierarichyPages = pagesObject.data.pages.map(p => p.uuid)
       firstHierarichyPages.forEach(i => {
@@ -525,6 +544,7 @@ export default class ScomPagesMenu extends Module {
             class="prevent-select"
           ></i-label>
           <i-icon
+            id="btnAddRootPage"
             name='plus'
             fill={'var(--colors-primary-main)'}
             width={28} height={28}

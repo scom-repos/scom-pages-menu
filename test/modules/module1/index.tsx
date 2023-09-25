@@ -23,7 +23,9 @@ export default class Module1 extends Module {
     render() {
         return <i-panel>
 
-            <i-scom-pages-menu id="menu" data={data} width="300px" display={'block'} onChangedPage={this.testFunction} activePageUuid={data.pages[1].uuid}></i-scom-pages-menu>
+            <i-scom-pages-menu id="menu" data={data} width="300px"
+                display={'block'} mode={'viewer'}
+                onChangedPage={this.testFunction} activePageUuid={data.pages[1].uuid}></i-scom-pages-menu>
 
         </i-panel>
     }

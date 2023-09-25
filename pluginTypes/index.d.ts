@@ -41,9 +41,11 @@ declare module "@scom/scom-pages-menu" {
     import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
     export { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
     type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
+    type MenuMode = 'editor' | 'viewer';
     interface ScomPagesMenuElement extends ControlElement {
         data: IPagesMenu;
         activePageUuid?: string;
+        mode?: MenuMode;
         onChangedPage: OnChangedPage;
     }
     global {
@@ -61,10 +63,14 @@ declare module "@scom/scom-pages-menu" {
         private isEditing;
         private focusedPageId;
         private _activePageUuid;
+        private _mode;
+        private btnAddRootPage;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         get data(): IPagesMenu;
         set data(value: IPagesMenu);
+        get mode(): MenuMode;
+        set mode(value: MenuMode);
         get activePageUuid(): string;
         set activePageUuid(value: string);
         private noDataTxt;
