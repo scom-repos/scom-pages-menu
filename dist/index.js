@@ -340,12 +340,12 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.focusedPageId = uuid;
             const menuCards = this.pnlMenu.querySelectorAll('#menuCard');
             for (let i = 0; i < menuCards.length; i++) {
-                const cardDot = menuCards[i].querySelector('#cardDot');
+                const cardIcon = menuCards[i].querySelector('#cardIcon');
                 const cardTitle = menuCards[i].querySelector('#cardTitle');
-                cardDot.classList.remove("focused-card");
+                cardIcon.classList.remove("focused-card");
                 cardTitle.classList.remove("focused-card");
                 if (menuCards[i].getAttribute('uuid') == uuid) {
-                    cardDot.classList.add("focused-card");
+                    cardIcon.classList.add("focused-card");
                     cardTitle.classList.add("focused-card");
                 }
             }
@@ -504,6 +504,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.renderMenu();
         }
         onClickMenuCard(uuid) {
+            if (this.isEditing)
+                return;
             const page = store_1.pagesObject.getPage(uuid);
             const currPage = store_1.pagesObject.getPage(this._activePageUuid);
             this._activePageUuid = uuid;
