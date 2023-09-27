@@ -19,14 +19,14 @@ import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
-type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
+type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
 type MenuMode = 'editor' | 'viewer';
 
 interface ScomPagesMenuElement extends ControlElement {
-  data: IPagesMenu,
+  data?: IPagesMenu,
   activePageUuid?: string,
   mode?: MenuMode,
-  onChangedPage: OnChangedPage
+  onChanged: OnChanged
 }
 
 declare global {
@@ -40,7 +40,7 @@ declare global {
 @customModule
 @customElements('i-scom-pages-menu')
 export default class ScomPagesMenu extends Module {
-  private onChangedPage: OnChangedPage;
+  private onChanged: OnChanged;
   private expandedMenuItem: string[] = [];
   private pnlMenu: VStack;
   private draggingPageUUid: string;
@@ -60,11 +60,20 @@ export default class ScomPagesMenu extends Module {
     super(parent, options);
   }
 
-  get data() {
+  // get data() {
+  //   return pagesObject.data;
+  // }
+
+  // set data(value: IPagesMenu) {
+  //   pagesObject.data = value;
+  //   this.renderMenu();
+  // }
+
+  getData(): IPagesMenu {
     return pagesObject.data;
   }
 
-  set data(value: IPagesMenu) {
+  setData(value: IPagesMenu) {
     pagesObject.data = value;
     this.renderMenu();
   }
@@ -95,8 +104,8 @@ export default class ScomPagesMenu extends Module {
     const data = this.getAttribute('data', true);
     this._activePageUuid = this.getAttribute('activePageUuid', true);
     this._mode = this.getAttribute('mode', true) || 'editor';
-    this.onChangedPage = this.getAttribute('onChangedPage', true);
-    pagesObject.data = data;
+    this.onChanged = this.getAttribute('onChanged', true);
+    if (data) pagesObject.data = data;
     this.renderMenu(true);
   }
 
@@ -277,7 +286,7 @@ export default class ScomPagesMenu extends Module {
   renderMenu(firstHierarichyExpand: boolean = false) {
     this.pnlMenu.clearInnerHTML();
     if (this.btnAddRootPage) this.btnAddRootPage.visible = this._mode == 'editor';
-    if (!this._activePageUuid && pagesObject.data.pages && pagesObject.data.pages[0] && pagesObject.data.pages[0].uuid) 
+    if (!this._activePageUuid && pagesObject.data.pages && pagesObject.data.pages[0] && pagesObject.data.pages[0].uuid)
       this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
     if (firstHierarichyExpand) {
       const firstHierarichyPages = pagesObject.data.pages.map(p => p.uuid)
@@ -344,7 +353,7 @@ export default class ScomPagesMenu extends Module {
     const page = pagesObject.getPage(uuid);
     const currPage = pagesObject.getPage(this._activePageUuid);
     this._activePageUuid = uuid;
-    if (this.onChangedPage) this.onChangedPage(page, currPage);
+    if (this.onChanged) this.onChanged(page, currPage);
     if (page.pages) this.changeChildrenVisibility(uuid);
     this.renderMenu();
   }
@@ -535,7 +544,7 @@ export default class ScomPagesMenu extends Module {
 
   render() {
     return (
-      <i-vstack gap={"0.5rem"} background={{ color: "#FAFAFA" }} height={"100%"}
+      <i-vstack gap={"0.5rem"} height={"100%"}
         padding={{ top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' }}>
         <i-hstack gap={'1rem'} verticalAlignment='center' horizontalAlignment='space-between'>
           <i-label

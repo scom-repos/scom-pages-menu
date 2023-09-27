@@ -40,13 +40,13 @@ declare module "@scom/scom-pages-menu" {
     import { Module, ControlElement, Container } from '@ijstech/components';
     import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
     export { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
-    type OnChangedPage = (newPage: IPageData, oldPage: IPageData) => void;
+    type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
     type MenuMode = 'editor' | 'viewer';
     interface ScomPagesMenuElement extends ControlElement {
-        data: IPagesMenu;
+        data?: IPagesMenu;
         activePageUuid?: string;
         mode?: MenuMode;
-        onChangedPage: OnChangedPage;
+        onChanged: OnChanged;
     }
     global {
         namespace JSX {
@@ -56,7 +56,7 @@ declare module "@scom/scom-pages-menu" {
         }
     }
     export default class ScomPagesMenu extends Module {
-        private onChangedPage;
+        private onChanged;
         private expandedMenuItem;
         private pnlMenu;
         private draggingPageUUid;
@@ -67,8 +67,8 @@ declare module "@scom/scom-pages-menu" {
         private btnAddRootPage;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
-        get data(): IPagesMenu;
-        set data(value: IPagesMenu);
+        getData(): IPagesMenu;
+        setData(value: IPagesMenu): void;
         get mode(): MenuMode;
         set mode(value: MenuMode);
         get activePageUuid(): string;

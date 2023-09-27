@@ -13,19 +13,21 @@ export default class Module1 extends Module {
 
     async init() {
         super.init();
+        this.menu.setData(data);
     }
 
     testFunction(newPage: any, oldPage: any) {
         console.log("newPage", newPage)
         console.log("oldPage", oldPage)
+        console.log("data", this.menu.getData())
     }
 
     render() {
         return <i-panel>
 
-            <i-scom-pages-menu id="menu" data={data} width="300px"
+            <i-scom-pages-menu id="menu" width="300px"
                 display={'block'} mode={'viewer'}
-                onChangedPage={this.testFunction} activePageUuid={data.pages[1].uuid}></i-scom-pages-menu>
+                onChanged={this.testFunction}></i-scom-pages-menu>
 
         </i-panel>
     }

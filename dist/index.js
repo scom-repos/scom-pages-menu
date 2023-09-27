@@ -262,10 +262,17 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.isEditing = false;
             this.noDataTxt = "No Pages";
         }
-        get data() {
+        // get data() {
+        //   return pagesObject.data;
+        // }
+        // set data(value: IPagesMenu) {
+        //   pagesObject.data = value;
+        //   this.renderMenu();
+        // }
+        getData() {
             return store_1.pagesObject.data;
         }
-        set data(value) {
+        setData(value) {
             store_1.pagesObject.data = value;
             this.renderMenu();
         }
@@ -289,8 +296,9 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const data = this.getAttribute('data', true);
             this._activePageUuid = this.getAttribute('activePageUuid', true);
             this._mode = this.getAttribute('mode', true) || 'editor';
-            this.onChangedPage = this.getAttribute('onChangedPage', true);
-            store_1.pagesObject.data = data;
+            this.onChanged = this.getAttribute('onChanged', true);
+            if (data)
+                store_1.pagesObject.data = data;
             this.renderMenu(true);
         }
         initEventBus() { }
@@ -523,8 +531,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const page = store_1.pagesObject.getPage(uuid);
             const currPage = store_1.pagesObject.getPage(this._activePageUuid);
             this._activePageUuid = uuid;
-            if (this.onChangedPage)
-                this.onChangedPage(page, currPage);
+            if (this.onChanged)
+                this.onChanged(page, currPage);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
             this.renderMenu();
@@ -611,7 +619,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             editBtnStack.visible = toggle;
         }
         render() {
-            return (this.$render("i-vstack", { gap: "0.5rem", background: { color: "#FAFAFA" }, height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },
+            return (this.$render("i-vstack", { gap: "0.5rem", height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },
                 this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center', horizontalAlignment: 'space-between' },
                     this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" }),
                     this.$render("i-icon", { id: "btnAddRootPage", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null) })),
