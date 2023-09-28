@@ -9,10 +9,9 @@ import {
   Label,
   VStack,
   Input,
-  HStack,
-  Button
+  HStack
 } from '@ijstech/components';
-import { iconButtonStyle, menuCardStyle, menuStyle } from './index.css';
+import { iconButtonStyle, menuCardStyle, menuStyle, mainWrapperStyle } from './index.css';
 import { IPagesMenu, IPageData } from './interface'
 export { IPagesMenu, IPageData } from './interface'
 import { pagesObject } from './store'
@@ -21,11 +20,13 @@ const Theme = Styles.Theme.ThemeVars;
 
 type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
 type MenuMode = 'editor' | 'viewer';
+type Theme = 'light' | 'dark';
 
 interface ScomPagesMenuElement extends ControlElement {
   data?: IPagesMenu,
   activePageUuid?: string,
   mode?: MenuMode,
+  theme?: Theme;
   onChanged: OnChanged
 }
 
@@ -48,7 +49,8 @@ export default class ScomPagesMenu extends Module {
   private focusedPageId: string;
   private _activePageUuid: string;
   private _mode: MenuMode;
-  private btnAddRootPage: Button;
+  private _theme: Theme;
+  private mainWrapper: VStack;
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -59,15 +61,6 @@ export default class ScomPagesMenu extends Module {
   constructor(parent?: Container, options?: ScomPagesMenuElement) {
     super(parent, options);
   }
-
-  // get data() {
-  //   return pagesObject.data;
-  // }
-
-  // set data(value: IPagesMenu) {
-  //   pagesObject.data = value;
-  //   this.renderMenu();
-  // }
 
   getData(): IPagesMenu {
     return pagesObject.data;
@@ -84,6 +77,15 @@ export default class ScomPagesMenu extends Module {
 
   set mode(value: MenuMode) {
     this._mode = value;
+    this.renderMenu();
+  }
+
+  get theme(): Theme {
+    return this._theme;
+  }
+
+  set theme(value: Theme) {
+    this._theme = value;
     this.renderMenu();
   }
 
@@ -104,6 +106,7 @@ export default class ScomPagesMenu extends Module {
     const data = this.getAttribute('data', true);
     this._activePageUuid = this.getAttribute('activePageUuid', true);
     this._mode = this.getAttribute('mode', true) || 'editor';
+    this._theme = this.getAttribute('theme', true) || 'light';
     this.onChanged = this.getAttribute('onChanged', true);
     if (data) pagesObject.data = data;
     this.renderMenu(true);
@@ -284,8 +287,43 @@ export default class ScomPagesMenu extends Module {
   }
 
   renderMenu(firstHierarichyExpand: boolean = false) {
-    this.pnlMenu.clearInnerHTML();
-    if (this.btnAddRootPage) this.btnAddRootPage.visible = this._mode == 'editor';
+    this.mainWrapper.clearInnerHTML();
+
+    if (this._theme == 'dark') this.mainWrapper.classList.add('dark')
+    else this.mainWrapper.classList.remove('dark')
+
+    const iconClassList = (this._theme == 'dark') ? `pointer ${iconButtonStyle} dark` : `pointer ${iconButtonStyle}`;
+    const AddRootPageBtnVisible = this._mode == 'editor';
+    const menuHeader = (<i-hstack gap={'1rem'} verticalAlignment='center' horizontalAlignment='space-between'>
+      <i-label
+        caption={"Pages menu"}
+        font={{ color: 'var(--text-primary)', weight: 750, size: '18px' }}
+        class="prevent-select"
+      ></i-label>
+      <i-icon
+        id="btnAddRootPage"
+        name='plus'
+        fill={'var(--colors-primary-main)'}
+        width={28} height={28}
+        padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
+        margin={{ right: 4 }}
+        class={iconClassList}
+        tooltip={{ content: "Add page", placement: "top" }}
+        onClick={() => this.onClickAddChildBtn(null)}
+        visible={AddRootPageBtnVisible}
+      ></i-icon>
+    </i-hstack>)
+
+    this.mainWrapper.append(menuHeader);
+
+    const pnlMenuWrapperClassList = (this._theme == 'dark') ? `pointer ${menuStyle} dark` : `pointer ${menuStyle}`;
+
+    const pnlMenuWrapper = (<i-vstack id="pnlMenuWrapper" width={"100%"}>
+      <i-vstack id='pnlMenu' class={pnlMenuWrapperClassList}></i-vstack>
+    </i-vstack>)
+
+    this.mainWrapper.append(pnlMenuWrapper);
+
     if (!this._activePageUuid && pagesObject.data.pages && pagesObject.data.pages[0] && pagesObject.data.pages[0].uuid)
       this._activePageUuid = pagesObject.data.pages ? pagesObject.data.pages[0].uuid : undefined;
     if (firstHierarichyExpand) {
@@ -312,7 +350,7 @@ export default class ScomPagesMenu extends Module {
         >
           <i-label
             caption={this.noDataTxt}
-            font={{ size: '16px', color: '#3b3838', weight: 530 }}
+            font={{ size: '16px', color: 'var(--text-secondary)', weight: 530 }}
             padding={{ top: 8, bottom: 8, left: 8, right: 8 }}
             maxHeight={34}
             overflow={"hidden"}
@@ -366,10 +404,12 @@ export default class ScomPagesMenu extends Module {
     const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
     const iconHeight = !hasChildren ? '5px' : '15px';
     const marginLeft = (level * 1).toString() + 'rem';
+    const menuCardClassList = (this._theme == 'dark') ? `${menuCardStyle} dark` : `${menuCardStyle}`;
+    const iconClassList = (this._theme == 'dark') ? `pointer ${iconButtonStyle} dark` : `pointer ${iconButtonStyle}`;
     const menuCard = (
       <i-hstack
         id="menuCard"
-        class={menuCardStyle}
+        class={menuCardClassList}
         verticalAlignment="center"
         horizontalAlignment='space-between'
         width="100%"
@@ -386,13 +426,13 @@ export default class ScomPagesMenu extends Module {
             margin={{ left: marginLeft }}
             maxHeight={34}
             overflow={"hidden"}
-            fill={'#3b3838'}
+            fill={'var(--text-secondary)'}
             class={isActive ? "focused-card" : ""}
           ></i-icon>
           <i-label
             id="cardTitle"
             caption={page.name}
-            font={{ size: '16px', color: '#3b3838', weight: 530 }}
+            font={{ size: '16px', color: 'var(--text-secondary)', weight: 530 }}
             padding={{ top: 8, bottom: 8, left: 8, right: 8 }}
             maxHeight={34}
             class={isActive ? "focused-card" : ""}
@@ -414,7 +454,7 @@ export default class ScomPagesMenu extends Module {
             width={28} height={28}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
+            class={iconClassList}
             tooltip={{ content: "Add page", placement: "top" }}
             onClick={() => this.onClickAddChildBtn(uuid)}
           ></i-icon>
@@ -425,7 +465,7 @@ export default class ScomPagesMenu extends Module {
             width={28} height={28}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
+            class={iconClassList}
             tooltip={{ content: "Rename", placement: "top" }}
             onClick={() => this.onClickRenameBtn(uuid)}
           ></i-icon>
@@ -436,7 +476,7 @@ export default class ScomPagesMenu extends Module {
             width={28} height={28}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
+            class={iconClassList}
             tooltip={{ content: "Remove", placement: "top" }}
             onClick={() => this.onClickRemoveBtn(uuid)}
           ></i-icon>
@@ -448,7 +488,7 @@ export default class ScomPagesMenu extends Module {
             fill={'var(--colors-primary-main)'}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
+            class={iconClassList}
             tooltip={{ content: "Cancel", placement: "top" }}
             onClick={() => this.onClickCancelBtn(uuid)}
           ></i-icon>
@@ -458,7 +498,7 @@ export default class ScomPagesMenu extends Module {
             fill={'var(--colors-primary-main)'}
             padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
             margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
+            class={iconClassList}
             tooltip={{ content: "Confirm", placement: "top" }}
             onClick={() => this.onClickConfirmBtn(uuid)}
           ></i-icon>
@@ -544,29 +584,12 @@ export default class ScomPagesMenu extends Module {
 
   render() {
     return (
-      <i-vstack gap={"0.5rem"} height={"100%"}
+      <i-vstack
+        id='mainWrapper'
+        gap={"0.5rem"}
+        height={"100%"}
+        class={mainWrapperStyle}
         padding={{ top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' }}>
-        <i-hstack gap={'1rem'} verticalAlignment='center' horizontalAlignment='space-between'>
-          <i-label
-            caption={"Pages menu"}
-            font={{ color: 'var(--colors-primary-main)', weight: 750, size: '18px' }}
-            class="prevent-select"
-          ></i-label>
-          <i-icon
-            id="btnAddRootPage"
-            name='plus'
-            fill={'var(--colors-primary-main)'}
-            width={28} height={28}
-            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
-            margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
-            tooltip={{ content: "Add page", placement: "top" }}
-            onClick={() => this.onClickAddChildBtn(null)}
-          ></i-icon>
-        </i-hstack>
-        <i-vstack id="pnlMenuWrapper" width={"100%"}>
-          <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>
-        </i-vstack>
       </i-vstack>
     )
   }

@@ -7,12 +7,18 @@ export const menuCardStyle = Styles.style({
   transition: '0.3s',
   $nest: {
     '&:hover': {
-      backgroundColor: "#b8e4f2"
+      backgroundColor: "#b8e4f2",
+      $nest: {
+        '&.dark': {
+          backgroundColor: "#303030",
+
+        }
+      }
     },
     'i-label': {
       overflow: 'hidden',
-      // whiteSpace: 'nowrap',
-      // textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+      textOverflow: 'ellipsis',
       display: '-webkit-box',
       '-webkit-line-clamp': 2,
       WebkitBoxOrient: 'vertical',
@@ -24,8 +30,11 @@ export const menuCardStyle = Styles.style({
       objectFit: 'cover',
       borderRadius: 5
     },
+    '&.dark .focused-card': {
+      color: "var(--text-primary) !important"
+    },
     '.focused-card': {
-      color: "#0247bf !important",
+      color: "var(--text-primary) !important",
       fontWeight: "600 !important"
     }
   }
@@ -35,7 +44,12 @@ export const iconButtonStyle = Styles.style({
   borderRadius: '10px',
   $nest: {
     '&:hover': {
-      backgroundColor: '#abccd4 !important'
+      backgroundColor: '#abccd4 !important',
+      $nest: {
+        '&.dark': {
+          backgroundColor: "#303030 !important"
+        }
+      }
     }
   }
 })
@@ -43,12 +57,27 @@ export const iconButtonStyle = Styles.style({
 export const menuStyle = Styles.style({
   $nest: {
     '.active-drop-line': {
-      background: 'rgb(66,133,244)',
+      background: '#4286f4',
       opacity: 1
     },
+    '&.dark .active-drop-line': {
+      background: "#ffffff !important"
+    },
     '.inactive-drop-line': {
-      background: 'rgb(0,0,0)',
+      background: '#fafafa',
       opacity: 0
+    },
+    '&.dark .inactive-drop-line': {
+      background: "#303030 !important"
+    },
+  }
+})
+
+export const mainWrapperStyle = Styles.style({
+  background: '#fafafa',
+  $nest: {
+    '&.dark': {
+      background: "#303030 !important"
     }
   }
 })

@@ -3,6 +3,7 @@ declare module "@scom/scom-pages-menu/index.css.ts" {
     export const menuCardStyle: string;
     export const iconButtonStyle: string;
     export const menuStyle: string;
+    export const mainWrapperStyle: string;
 }
 /// <amd-module name="@scom/scom-pages-menu/interface.ts" />
 declare module "@scom/scom-pages-menu/interface.ts" {
@@ -37,15 +38,18 @@ declare module "@scom/scom-pages-menu/utils.ts" {
 }
 /// <amd-module name="@scom/scom-pages-menu" />
 declare module "@scom/scom-pages-menu" {
-    import { Module, ControlElement, Container } from '@ijstech/components';
+    import { Module, Styles, ControlElement, Container } from '@ijstech/components';
     import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
     export { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
+    const Theme: Styles.Theme.IThemeVariables;
     type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
     type MenuMode = 'editor' | 'viewer';
+    type Theme = 'light' | 'dark';
     interface ScomPagesMenuElement extends ControlElement {
         data?: IPagesMenu;
         activePageUuid?: string;
         mode?: MenuMode;
+        theme?: Theme;
         onChanged: OnChanged;
     }
     global {
@@ -64,13 +68,16 @@ declare module "@scom/scom-pages-menu" {
         private focusedPageId;
         private _activePageUuid;
         private _mode;
-        private btnAddRootPage;
+        private _theme;
+        private mainWrapper;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         getData(): IPagesMenu;
         setData(value: IPagesMenu): void;
         get mode(): MenuMode;
         set mode(value: MenuMode);
+        get theme(): Theme;
+        set theme(value: Theme);
         get activePageUuid(): string;
         set activePageUuid(value: string);
         private noDataTxt;

@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.menuStyle = exports.iconButtonStyle = exports.menuCardStyle = void 0;
+    exports.mainWrapperStyle = exports.menuStyle = exports.iconButtonStyle = exports.menuCardStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
     exports.menuCardStyle = components_1.Styles.style({
         cursor: 'pointer',
@@ -15,12 +15,17 @@ define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/co
         transition: '0.3s',
         $nest: {
             '&:hover': {
-                backgroundColor: "#b8e4f2"
+                backgroundColor: "#b8e4f2",
+                $nest: {
+                    '&.dark': {
+                        backgroundColor: "#303030",
+                    }
+                }
             },
             'i-label': {
                 overflow: 'hidden',
-                // whiteSpace: 'nowrap',
-                // textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                textOverflow: 'ellipsis',
                 display: '-webkit-box',
                 '-webkit-line-clamp': 2,
                 WebkitBoxOrient: 'vertical',
@@ -32,6 +37,9 @@ define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/co
                 objectFit: 'cover',
                 borderRadius: 5
             },
+            '&.dark .focused-card': {
+                color: "#424242 !important"
+            },
             '.focused-card': {
                 color: "#0247bf !important",
                 fontWeight: "600 !important"
@@ -42,19 +50,38 @@ define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/co
         borderRadius: '10px',
         $nest: {
             '&:hover': {
-                backgroundColor: '#abccd4 !important'
+                backgroundColor: '#abccd4 !important',
+                $nest: {
+                    '&.dark': {
+                        backgroundColor: "#303030 !important"
+                    }
+                }
             }
         }
     });
     exports.menuStyle = components_1.Styles.style({
         $nest: {
             '.active-drop-line': {
-                background: 'rgb(66,133,244)',
+                background: '#4286f4',
                 opacity: 1
             },
+            '&.dark .active-drop-line': {
+                background: "#ffffff !important"
+            },
             '.inactive-drop-line': {
-                background: 'rgb(0,0,0)',
+                background: '#fafafa',
                 opacity: 0
+            },
+            '&.dark .inactive-drop-line': {
+                background: "#303030 !important"
+            },
+        }
+    });
+    exports.mainWrapperStyle = components_1.Styles.style({
+        background: '#fafafa',
+        $nest: {
+            '&.dark': {
+                background: "#303030 !important"
             }
         }
     });
@@ -262,13 +289,6 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.isEditing = false;
             this.noDataTxt = "No Pages";
         }
-        // get data() {
-        //   return pagesObject.data;
-        // }
-        // set data(value: IPagesMenu) {
-        //   pagesObject.data = value;
-        //   this.renderMenu();
-        // }
         getData() {
             return store_1.pagesObject.data;
         }
@@ -281,6 +301,13 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         }
         set mode(value) {
             this._mode = value;
+            this.renderMenu();
+        }
+        get theme() {
+            return this._theme;
+        }
+        set theme(value) {
+            this._theme = value;
             this.renderMenu();
         }
         get activePageUuid() {
@@ -296,6 +323,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const data = this.getAttribute('data', true);
             this._activePageUuid = this.getAttribute('activePageUuid', true);
             this._mode = this.getAttribute('mode', true) || 'editor';
+            this._theme = this.getAttribute('theme', true) || 'light';
             this.onChanged = this.getAttribute('onChanged', true);
             if (data)
                 store_1.pagesObject.data = data;
@@ -478,9 +506,21 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             }
         }
         renderMenu(firstHierarichyExpand = false) {
-            this.pnlMenu.clearInnerHTML();
-            if (this.btnAddRootPage)
-                this.btnAddRootPage.visible = this._mode == 'editor';
+            this.mainWrapper.clearInnerHTML();
+            if (this._theme == 'dark')
+                this.mainWrapper.classList.add('dark');
+            else
+                this.mainWrapper.classList.remove('dark');
+            const iconClassList = (this._theme == 'dark') ? `pointer ${index_css_1.iconButtonStyle} dark` : `pointer ${index_css_1.iconButtonStyle}`;
+            const AddRootPageBtnVisible = this._mode == 'editor';
+            const menuHeader = (this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center', horizontalAlignment: 'space-between' },
+                this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" }),
+                this.$render("i-icon", { id: "btnAddRootPage", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: iconClassList, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null), visible: AddRootPageBtnVisible })));
+            this.mainWrapper.append(menuHeader);
+            const pnlMenuWrapperClassList = (this._theme == 'dark') ? `pointer ${index_css_1.menuStyle} dark` : `pointer ${index_css_1.menuStyle}`;
+            const pnlMenuWrapper = (this.$render("i-vstack", { id: "pnlMenuWrapper", width: "100%" },
+                this.$render("i-vstack", { id: 'pnlMenu', class: pnlMenuWrapperClassList })));
+            this.mainWrapper.append(pnlMenuWrapper);
             if (!this._activePageUuid && store_1.pagesObject.data.pages && store_1.pagesObject.data.pages[0] && store_1.pagesObject.data.pages[0].uuid)
                 this._activePageUuid = store_1.pagesObject.data.pages ? store_1.pagesObject.data.pages[0].uuid : undefined;
             if (firstHierarichyExpand) {
@@ -499,7 +539,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             });
             if (!items.length) {
                 const txt = (this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start', width: "100%", overflow: "hidden" },
-                    this.$render("i-label", { caption: this.noDataTxt, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, overflow: "hidden" })));
+                    this.$render("i-label", { caption: this.noDataTxt, font: { size: '16px', color: 'var(--text-primary)', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, overflow: "hidden" })));
                 this.pnlMenu.appendChild(txt);
                 return;
             }
@@ -545,18 +585,20 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const iconName = !hasChildren ? 'circle' : expanded ? 'angle-down' : 'angle-right';
             const iconHeight = !hasChildren ? '5px' : '15px';
             const marginLeft = (level * 1).toString() + 'rem';
-            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: index_css_1.menuCardStyle, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
+            const menuCardClassList = (this._theme == 'dark') ? `${index_css_1.menuCardStyle} dark` : `${index_css_1.menuCardStyle}`;
+            const iconClassList = (this._theme == 'dark') ? `pointer ${index_css_1.iconButtonStyle} dark` : `pointer ${index_css_1.iconButtonStyle}`;
+            const menuCard = (this.$render("i-hstack", { id: "menuCard", class: menuCardClassList, verticalAlignment: "center", horizontalAlignment: 'space-between', width: "100%", border: { radius: 5 }, overflow: "hidden", onClick: () => this.onClickMenuCard(uuid) },
                 this.$render("i-hstack", { verticalAlignment: "center", horizontalAlignment: 'start', overflow: 'hidden' },
-                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", fill: '#3b3838', class: isActive ? "focused-card" : "" }),
-                    this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
+                    this.$render("i-icon", { id: "cardIcon", name: iconName, width: '15px', height: iconHeight, margin: { left: marginLeft }, maxHeight: 34, overflow: "hidden", fill: 'var(--text-primary)', class: isActive ? "focused-card" : "" }),
+                    this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: 'var(--text-primary)', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
                 this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
-                    this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
-                    this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) }),
-                    this.$render("i-icon", { id: "cardRemoveBtn", name: 'trash', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Remove", placement: "top" }, onClick: () => this.onClickRemoveBtn(uuid) })),
+                    this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: iconClassList, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
+                    this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: iconClassList, tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) }),
+                    this.$render("i-icon", { id: "cardRemoveBtn", name: 'trash', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: iconClassList, tooltip: { content: "Remove", placement: "top" }, onClick: () => this.onClickRemoveBtn(uuid) })),
                 this.$render("i-hstack", { id: "editBtnStack", verticalAlignment: "center", visible: false },
-                    this.$render("i-icon", { name: 'times', width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Cancel", placement: "top" }, onClick: () => this.onClickCancelBtn(uuid) }),
-                    this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
+                    this.$render("i-icon", { name: 'times', width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: iconClassList, tooltip: { content: "Cancel", placement: "top" }, onClick: () => this.onClickCancelBtn(uuid) }),
+                    this.$render("i-icon", { name: "check", width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: iconClassList, tooltip: { content: "Confirm", placement: "top" }, onClick: () => this.onClickConfirmBtn(uuid) }))));
             menuCard.setAttribute('uuid', uuid);
             menuCard.setAttribute('draggable', 'true');
             menuCard.setAttribute('level', level);
@@ -619,12 +661,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             editBtnStack.visible = toggle;
         }
         render() {
-            return (this.$render("i-vstack", { gap: "0.5rem", height: "100%", padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } },
-                this.$render("i-hstack", { gap: '1rem', verticalAlignment: 'center', horizontalAlignment: 'space-between' },
-                    this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" }),
-                    this.$render("i-icon", { id: "btnAddRootPage", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null) })),
-                this.$render("i-vstack", { id: "pnlMenuWrapper", width: "100%" },
-                    this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
+            return (this.$render("i-vstack", { id: 'mainWrapper', gap: "0.5rem", height: "100%", class: index_css_1.mainWrapperStyle, padding: { top: '1.5rem', left: '1.5rem', right: '1.5rem', bottom: '1.5rem' } }));
         }
     };
     ScomPagesMenu = __decorate([
