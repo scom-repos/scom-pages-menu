@@ -1,4 +1,4 @@
-import { IPageData, IPagesMenu } from './interface'
+import { IPagesMenuItem, IPagesMenu } from './interface'
 
 export class PagesObject {
     private _data: IPagesMenu = {
@@ -13,7 +13,7 @@ export class PagesObject {
         this._data = value;
     }
 
-    getPage(uuid: string, currentPage?: IPageData): IPageData | undefined {
+    getPage(uuid: string, currentPage?: IPagesMenuItem): IPagesMenuItem | undefined {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (const page of this._data.pages) {
@@ -46,8 +46,8 @@ export class PagesObject {
         uuid: string,
         newName?: string,
         newCid?: string,
-        newPages?: IPageData[],
-        currentPage?: IPageData
+        newPages?: IPagesMenuItem[],
+        currentPage?: IPagesMenuItem
     ): boolean {
         if (!currentPage) {
             // Start the search from the top-level menu
@@ -81,7 +81,7 @@ export class PagesObject {
         return false; // Page not found
     }
 
-    addPage(newPage: IPageData, parentId?: string, index?: number): boolean {
+    addPage(newPage: IPagesMenuItem, parentId?: string, index?: number): boolean {
 
         if (parentId) {
             const parent = this.getPage(parentId);
@@ -104,7 +104,7 @@ export class PagesObject {
         }
     }
 
-    deletePage(uuid: string, currentPage?: IPageData, parent?: IPageData): boolean {
+    deletePage(uuid: string, currentPage?: IPagesMenuItem, parent?: IPagesMenuItem): boolean {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (let i = 0; i < this._data.pages.length; i++) {
@@ -144,7 +144,7 @@ export class PagesObject {
     }
 
 
-    getParent(uuid: string): IPageData {
+    getParent(uuid: string): IPagesMenuItem {
         for (const page of this._data.pages) {
             if (page.uuid === uuid) {
                 return undefined; // The given id represents a page in the first hierarchy
@@ -159,7 +159,7 @@ export class PagesObject {
         return undefined;
     }
 
-    private findParent(page: IPageData, uuid: string): IPageData {
+    private findParent(page: IPagesMenuItem, uuid: string): IPagesMenuItem {
         for (const _page of page.pages) {
             if (_page.uuid === uuid) {
                 return page;

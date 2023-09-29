@@ -3,30 +3,31 @@ declare module "@scom/scom-pages-menu/index.css.ts" {
     export const menuCardStyle: string;
     export const iconButtonStyle: string;
     export const menuStyle: string;
+    export const modalStyle: string;
 }
 /// <amd-module name="@scom/scom-pages-menu/interface.ts" />
 declare module "@scom/scom-pages-menu/interface.ts" {
-    export interface IPageData {
+    export interface IPagesMenuItem {
         uuid: string;
         name: string;
-        pages?: IPageData[];
+        pages?: IPagesMenuItem[];
     }
     export interface IPagesMenu {
-        pages: IPageData[];
+        pages: IPagesMenuItem[];
     }
 }
 /// <amd-module name="@scom/scom-pages-menu/store.ts" />
 declare module "@scom/scom-pages-menu/store.ts" {
-    import { IPageData, IPagesMenu } from "@scom/scom-pages-menu/interface.ts";
+    import { IPagesMenuItem, IPagesMenu } from "@scom/scom-pages-menu/interface.ts";
     export class PagesObject {
         private _data;
         get data(): IPagesMenu;
         set data(value: IPagesMenu);
-        getPage(uuid: string, currentPage?: IPageData): IPageData | undefined;
-        setPage(uuid: string, newName?: string, newCid?: string, newPages?: IPageData[], currentPage?: IPageData): boolean;
-        addPage(newPage: IPageData, parentId?: string, index?: number): boolean;
-        deletePage(uuid: string, currentPage?: IPageData, parent?: IPageData): boolean;
-        getParent(uuid: string): IPageData;
+        getPage(uuid: string, currentPage?: IPagesMenuItem): IPagesMenuItem | undefined;
+        setPage(uuid: string, newName?: string, newCid?: string, newPages?: IPagesMenuItem[], currentPage?: IPagesMenuItem): boolean;
+        addPage(newPage: IPagesMenuItem, parentId?: string, index?: number): boolean;
+        deletePage(uuid: string, currentPage?: IPagesMenuItem, parent?: IPagesMenuItem): boolean;
+        getParent(uuid: string): IPagesMenuItem;
         private findParent;
     }
     export const pagesObject: PagesObject;
@@ -38,9 +39,9 @@ declare module "@scom/scom-pages-menu/utils.ts" {
 /// <amd-module name="@scom/scom-pages-menu" />
 declare module "@scom/scom-pages-menu" {
     import { Module, ControlElement, Container } from '@ijstech/components';
-    import { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
-    export { IPagesMenu, IPageData } from "@scom/scom-pages-menu/interface.ts";
-    type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
+    import { IPagesMenu, IPagesMenuItem } from "@scom/scom-pages-menu/interface.ts";
+    export { IPagesMenu, IPagesMenuItem } from "@scom/scom-pages-menu/interface.ts";
+    type OnChanged = (newPage: IPagesMenuItem, oldPage: IPagesMenuItem) => void;
     type MenuMode = 'editor' | 'viewer';
     interface ScomPagesMenuElement extends ControlElement {
         data?: IPagesMenu;

@@ -12,14 +12,14 @@ import {
   HStack,
   Button
 } from '@ijstech/components';
-import { iconButtonStyle, menuCardStyle, menuStyle } from './index.css';
-import { IPagesMenu, IPageData } from './interface'
-export { IPagesMenu, IPageData } from './interface'
+import { iconButtonStyle, menuCardStyle, menuStyle, modalStyle } from './index.css';
+import { IPagesMenu, IPagesMenuItem } from './interface'
+export { IPagesMenu, IPagesMenuItem } from './interface'
 import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
-type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
+type OnChanged = (newPage: IPagesMenuItem, oldPage: IPagesMenuItem) => void;
 type MenuMode = 'editor' | 'viewer';
 
 interface ScomPagesMenuElement extends ControlElement {
@@ -295,7 +295,7 @@ export default class ScomPagesMenu extends Module {
       })
     }
 
-    const items = pagesObject.data.pages.map((page: IPageData) => {
+    const items = pagesObject.data.pages.map((page: IPagesMenuItem) => {
       return {
         caption: page.name || "Untitled Page",
         uuid: page.uuid,
@@ -567,6 +567,14 @@ export default class ScomPagesMenu extends Module {
         <i-vstack id="pnlMenuWrapper" width={"100%"}>
           <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>
         </i-vstack>
+        {/* <i-modal id="mdEditPnl" class={modalStyle} maxWidth="400px">
+          <i-panel
+            id="pnlMain"
+            width="100%"
+            padding={{ top: "1.5rem", bottom: "1.5rem", left: "1.5rem", right: "1.5rem" }}
+          >
+          </i-panel>
+        </i-modal> */}
       </i-vstack>
     )
   }

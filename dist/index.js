@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/components"], function (require, exports, components_1) {
     "use strict";
     Object.defineProperty(exports, "__esModule", { value: true });
-    exports.menuStyle = exports.iconButtonStyle = exports.menuCardStyle = void 0;
+    exports.modalStyle = exports.menuStyle = exports.iconButtonStyle = exports.menuCardStyle = void 0;
     const Theme = components_1.Styles.Theme.ThemeVars;
     exports.menuCardStyle = components_1.Styles.style({
         cursor: 'pointer',
@@ -56,6 +56,14 @@ define("@scom/scom-pages-menu/index.css.ts", ["require", "exports", "@ijstech/co
                 background: 'rgb(0,0,0)',
                 opacity: 0
             }
+        }
+    });
+    exports.modalStyle = components_1.Styles.style({
+        $nest: {
+            '.modal': {
+                padding: 0,
+                borderRadius: 4
+            },
         }
     });
 });

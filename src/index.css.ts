@@ -52,3 +52,12 @@ export const menuStyle = Styles.style({
     }
   }
 })
+
+export const modalStyle = Styles.style({
+  $nest: {
+    '.modal': {
+      padding: 0,
+      borderRadius: 4
+    },
+  }
+})

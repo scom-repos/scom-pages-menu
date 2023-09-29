@@ -1,9 +1,9 @@
-export interface IPageData {
+export interface IPagesMenuItem {
   uuid: string;
   name: string;
-  pages?: IPageData[];
+  pages?: IPagesMenuItem[];
 }
 
 export interface IPagesMenu {
-  pages: IPageData[]
+  pages: IPagesMenuItem[]
 }
