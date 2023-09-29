@@ -13,12 +13,13 @@ import {
   Button
 } from '@ijstech/components';
 import { iconButtonStyle, menuCardStyle, menuStyle } from './index.css';
-import { IPagesMenu, IPagesMenuItem } from './interface'
+import { IPagesMenu, IPageData } from './interface'
+export { IPagesMenu, IPageData } from './interface'
 import { pagesObject } from './store'
 import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
-type OnChanged = (newPage: IPagesMenuItem, oldPage: IPagesMenuItem) => void;
+type OnChanged = (newPage: IPageData, oldPage: IPageData) => void;
 type MenuMode = 'editor' | 'viewer';
 
 interface ScomPagesMenuElement extends ControlElement {
@@ -294,7 +295,7 @@ export default class ScomPagesMenu extends Module {
       })
     }
 
-    const items = pagesObject.data.pages.map((page: IPagesMenuItem) => {
+    const items = pagesObject.data.pages.map((page: IPageData) => {
       return {
         caption: page.name || "Untitled Page",
         uuid: page.uuid,
