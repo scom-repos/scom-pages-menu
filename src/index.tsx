@@ -10,7 +10,12 @@ import {
   VStack,
   Input,
   HStack,
-  Button
+  Button,
+  Modal,
+  Form,
+  IDataSchema,
+  IUISchema,
+  IFormOptions
 } from '@ijstech/components';
 import { iconButtonStyle, menuCardStyle, menuStyle, modalStyle } from './index.css';
 import { IPagesMenu, IPagesMenuItem } from './interface'
@@ -47,8 +52,86 @@ export default class ScomPagesMenu extends Module {
   private isEditing: boolean = false;
   private focusedPageId: string;
   private _activePageUuid: string;
+  private editingPageUuid: string;
   private _mode: MenuMode;
   private btnAddRootPage: Button;
+  private mdEdit: Modal;
+  private formEdit: Form;
+
+  private _jsonSchema: IDataSchema = {
+    type: 'object',
+    required: ['name', 'url'],
+    properties: {
+      'name': {
+        type: 'string',
+        title: 'Name'
+      },
+      'show': {
+        type: 'boolean',
+        title: 'Show'
+      },
+      'url': {
+        type: 'string',
+        title: 'Url',
+        format: 'string'
+      }
+    }
+  };
+
+  private _uiSchema: IUISchema = {
+    type: 'VerticalLayout',
+    elements: [
+      {
+        type: 'HorizontalLayout',
+        elements: [
+          {
+            type: 'Control',
+            scope: '#/properties/name'
+          }
+        ]
+      },
+      {
+        type: 'HorizontalLayout',
+        elements: [
+          {
+            type: 'Control',
+            scope: '#/properties/show'
+          }
+        ]
+      },
+      {
+        type: 'HorizontalLayout',
+        elements: [
+          {
+            type: 'Control',
+            scope: '#/properties/url',
+            rule: {
+              effect: "ENABLE",
+              condition: {
+                scope: "#/properties/show",
+                schema: {
+                  const: true
+                }
+              }
+            }
+          }
+        ]
+      }
+    ]
+  };
+
+  private _formOptions: IFormOptions = {
+    columnWidth: "100%",
+    confirmButtonOptions: {
+      caption: 'Confirm',
+      onClick: this.handleFormConfirm.bind(this)
+    },
+    dateTimeFormat: {
+      date: 'DD/MM/YYYY',
+      time: 'HH:mm',
+      dateTime: 'YYYY-MM-DD HH:mm:ss'
+    }
+  };
 
   static async create(options?: ScomPagesMenuElement, parent?: Container) {
     let self = new this(parent, options);
@@ -59,15 +142,6 @@ export default class ScomPagesMenu extends Module {
   constructor(parent?: Container, options?: ScomPagesMenuElement) {
     super(parent, options);
   }
-
-  // get data() {
-  //   return pagesObject.data;
-  // }
-
-  // set data(value: IPagesMenu) {
-  //   pagesObject.data = value;
-  //   this.renderMenu();
-  // }
 
   getData(): IPagesMenu {
     return pagesObject.data;
@@ -107,6 +181,25 @@ export default class ScomPagesMenu extends Module {
     this.onChanged = this.getAttribute('onChanged', true);
     if (data) pagesObject.data = data;
     this.renderMenu(true);
+    this.resetForm();
+  }
+
+  private async handleFormConfirm() {
+    const page = pagesObject.getPage(this.editingPageUuid);
+    const formData = await this.formEdit.getFormData();
+
+    // check url
+    const isURLExist = pagesObject.getPageByURL(formData.url, [this.editingPageUuid]);
+    if (isURLExist) {
+      // show caution
+      console.log("This url exists")
+    } else {
+      // assign name and url
+      page.name = formData.name;
+      page.show = formData.show;
+      page.url = formData.url;
+      this.mdEdit.visible = false;
+    }
   }
 
   private initEventBus() { }
@@ -156,6 +249,13 @@ export default class ScomPagesMenu extends Module {
     });
   }
 
+  private resetForm() {
+    this.formEdit.jsonSchema = this._jsonSchema;
+    this.formEdit.uiSchema = this._uiSchema;
+    this.formEdit.formOptions = this._formOptions;
+    this.formEdit.renderForm();
+  }
+
   private initMenuCardEventListener(card: Control) {
     card.addEventListener('mouseenter', (event) => {
       if (this.isEditing || this._mode == "viewer") return;
@@ -183,7 +283,7 @@ export default class ScomPagesMenu extends Module {
   }
 
   private getActiveDropLineUuid(): string {
-    const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
+    const dropLines = this.pnlMenu.querySelectorAll('[id^="menuDropLine"]');
     for (let i = 0; i < dropLines.length; i++) {
       if (dropLines[i].classList.contains('active-drop-line')) {
         return dropLines[i].id.replace('menuDropLine-', '')
@@ -240,7 +340,7 @@ export default class ScomPagesMenu extends Module {
   }
 
   private setActiveDropLine(uuid: string) {
-    const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
+    const dropLines = this.pnlMenu.querySelectorAll('[id^="menuDropLine"]');
     for (const dropLine of dropLines) {
       dropLine.classList.remove('active-drop-line');
       dropLine.classList.remove('inactive-drop-line');
@@ -339,11 +439,46 @@ export default class ScomPagesMenu extends Module {
     return <i-panel id={`menuDropLine-${uuid}`} width={'100%'} height={'5px'}></i-panel>
   }
 
+  getHierarchyIndex(menu: IPagesMenuItem[], targetUuid: string, currentPath: string[] = []): string | null {
+    for (let i = 0; i < menu.length; i++) {
+      const page = menu[i];
+      const newPath = [...currentPath, `${i + 1}`];
+
+      if (page.uuid === targetUuid) {
+        return newPath.join('-');
+      }
+
+      if (page.pages) {
+        const nestedIndex = this.getHierarchyIndex(page.pages, targetUuid, newPath);
+        if (nestedIndex) {
+          return nestedIndex;
+        }
+      }
+    }
+
+    return null;
+  }
+
   private onClickAddChildBtn(parentUuid: string) {
+    console.log("onClickAddChildBtn")
+    const parent = pagesObject.getPage(parentUuid);
+    let newURL: string;
+    if (parent) {
+      const parentChildrenNumber = parent.pages ? parent.pages.length : 0;
+      const parentHierarchy = this.getHierarchyIndex(pagesObject.data.pages, parentUuid);
+      newURL = `page-${parentHierarchy}-${parentChildrenNumber + 1}`
+    } else {
+      newURL = `page-${pagesObject.data.pages.length + 1}`
+    }
+
+    const newUUID = generateUUID();
     pagesObject.addPage({
-      uuid: generateUUID(),
+      uuid: newUUID,
       name: 'Untitled page',
+      url: newURL,
+      show: true
     }, parentUuid)
+
     this.expandedMenuItem.push(parentUuid);
     this.renderMenu();
   }
@@ -352,8 +487,8 @@ export default class ScomPagesMenu extends Module {
     if (this.isEditing) return;
     const page = pagesObject.getPage(uuid);
     const currPage = pagesObject.getPage(this._activePageUuid);
-    this._activePageUuid = uuid;
-    if (this.onChanged) this.onChanged(page, currPage);
+    if (page.show === true) this._activePageUuid = uuid;
+    if (this.onChanged && page.show === true) this.onChanged(page, currPage);
     if (page.pages) this.changeChildrenVisibility(uuid);
     this.renderMenu();
   }
@@ -408,6 +543,17 @@ export default class ScomPagesMenu extends Module {
         </i-hstack>
         <i-hstack id="actionBtnStack" verticalAlignment="center" visible={false}>
           <i-icon
+            id="cardEditBtn"
+            name='pen'
+            fill={'var(--colors-primary-main)'}
+            width={28} height={28}
+            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
+            margin={{ right: 4 }}
+            class={`pointer ${iconButtonStyle}`}
+            tooltip={{ content: "Edit", placement: "top" }}
+            onClick={() => this.onClickEditBtn(uuid)}
+          ></i-icon>
+          <i-icon
             id="cardAddChildBtn"
             name='plus'
             fill={'var(--colors-primary-main)'}
@@ -417,17 +563,6 @@ export default class ScomPagesMenu extends Module {
             class={`pointer ${iconButtonStyle}`}
             tooltip={{ content: "Add page", placement: "top" }}
             onClick={() => this.onClickAddChildBtn(uuid)}
-          ></i-icon>
-          <i-icon
-            id="cardRenameBtn"
-            name='pen'
-            fill={'var(--colors-primary-main)'}
-            width={28} height={28}
-            padding={{ top: 7, bottom: 7, left: 7, right: 7 }}
-            margin={{ right: 4 }}
-            class={`pointer ${iconButtonStyle}`}
-            tooltip={{ content: "Rename", placement: "top" }}
-            onClick={() => this.onClickRenameBtn(uuid)}
           ></i-icon>
           <i-icon
             id="cardRemoveBtn"
@@ -511,6 +646,18 @@ export default class ScomPagesMenu extends Module {
     this.toggleEditor(uuid, true);
   }
 
+  private onClickEditBtn(uuid: string) {
+    const page = pagesObject.getPage(uuid);
+    if (!page) return;
+    this.editingPageUuid = uuid;
+    this.formEdit.setFormData({
+      name: page.name,
+      url: page.url,
+      show: page.show
+    })
+    this.mdEdit.visible = true;
+  }
+
   private onClickConfirmBtn(uuid: string) {
     this.setCardTitle(uuid);
     this.toggleEditor(uuid, false);
@@ -567,14 +714,9 @@ export default class ScomPagesMenu extends Module {
         <i-vstack id="pnlMenuWrapper" width={"100%"}>
           <i-vstack id='pnlMenu' class={menuStyle}></i-vstack>
         </i-vstack>
-        {/* <i-modal id="mdEditPnl" class={modalStyle} maxWidth="400px">
-          <i-panel
-            id="pnlMain"
-            width="100%"
-            padding={{ top: "1.5rem", bottom: "1.5rem", left: "1.5rem", right: "1.5rem" }}
-          >
-          </i-panel>
-        </i-modal> */}
+        <i-modal id="mdEdit" class={modalStyle} maxWidth="400px" padding={{ left: '1.5rem', right: '1.5rem', top: '1.5rem', bottom: '1.5rem', }}>
+          <i-form id={'formEdit'}></i-form>
+        </i-modal>
       </i-vstack>
     )
   }

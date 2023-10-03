@@ -114,11 +114,11 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
             }
             return undefined; // Page not found
         }
-        setPage(uuid, newName, newCid, newPages, currentPage) {
+        setPage(uuid, newName, newCid, newShow, newPages, currentPage) {
             if (!currentPage) {
                 // Start the search from the top-level menu
                 for (const page of this._data.pages) {
-                    if (this.setPage(uuid, newName, newCid, newPages, page)) {
+                    if (this.setPage(uuid, newName, newCid, newShow, newPages, page)) {
                         return true; // Page found and updated
                     }
                 }
@@ -129,6 +129,9 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                     if (newName !== undefined) {
                         currentPage.name = newName;
                     }
+                    if (newShow !== undefined) {
+                        currentPage.show = newShow;
+                    }
                     if (newPages !== undefined) {
                         currentPage.pages = newPages;
                     }
@@ -137,7 +140,7 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                 // If the current page has sub-pages, search within them
                 if (currentPage.pages) {
                     for (const subPage of currentPage.pages) {
-                        if (this.setPage(uuid, newName, newCid, newPages, subPage)) {
+                        if (this.setPage(uuid, newName, newCid, newShow, newPages, subPage)) {
                             return true; // Page found and updated
                         }
                     }
@@ -209,6 +212,31 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
             }
             return false; // Page not found
         }
+        getPageByURL(url, excludedUUID, currentPage) {
+            if (!currentPage) {
+                // Start the search from the top-level menu
+                for (const page of this._data.pages) {
+                    const result = this.getPageByURL(url, excludedUUID, page);
+                    if (result)
+                        return result;
+                }
+            }
+            else {
+                // Check if the current page matches the ID
+                if (currentPage.url && currentPage.url === url && !excludedUUID.includes(currentPage.uuid)) {
+                    return currentPage;
+                }
+                // If the current page has sub-pages, search within them
+                if (currentPage.pages) {
+                    for (const subPage of currentPage.pages) {
+                        const result = this.getPageByURL(url, excludedUUID, subPage);
+                        if (result)
+                            return result;
+                    }
+                }
+            }
+            return undefined; // Page not found
+        }
         getParent(uuid) {
             for (const page of this._data.pages) {
                 if (page.uuid === uuid) {
@@ -268,15 +296,80 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             super(parent, options);
             this.expandedMenuItem = [];
             this.isEditing = false;
+            this._jsonSchema = {
+                type: 'object',
+                required: ['name', 'url'],
+                properties: {
+                    'name': {
+                        type: 'string',
+                        title: 'Name'
+                    },
+                    'show': {
+                        type: 'boolean',
+                        title: 'Show'
+                    },
+                    'url': {
+                        type: 'string',
+                        title: 'Url',
+                        format: 'string'
+                    }
+                }
+            };
+            this._uiSchema = {
+                type: 'VerticalLayout',
+                elements: [
+                    {
+                        type: 'HorizontalLayout',
+                        elements: [
+                            {
+                                type: 'Control',
+                                scope: '#/properties/name'
+                            }
+                        ]
+                    },
+                    {
+                        type: 'HorizontalLayout',
+                        elements: [
+                            {
+                                type: 'Control',
+                                scope: '#/properties/show'
+                            }
+                        ]
+                    },
+                    {
+                        type: 'HorizontalLayout',
+                        elements: [
+                            {
+                                type: 'Control',
+                                scope: '#/properties/url',
+                                rule: {
+                                    effect: "ENABLE",
+                                    condition: {
+                                        scope: "#/properties/show",
+                                        schema: {
+                                            const: true
+                                        }
+                                    }
+                                }
+                            }
+                        ]
+                    }
+                ]
+            };
+            this._formOptions = {
+                columnWidth: "100%",
+                confirmButtonOptions: {
+                    caption: 'Confirm',
+                    onClick: this.handleFormConfirm.bind(this)
+                },
+                dateTimeFormat: {
+                    date: 'DD/MM/YYYY',
+                    time: 'HH:mm',
+                    dateTime: 'YYYY-MM-DD HH:mm:ss'
+                }
+            };
             this.noDataTxt = "No Pages";
         }
-        // get data() {
-        //   return pagesObject.data;
-        // }
-        // set data(value: IPagesMenu) {
-        //   pagesObject.data = value;
-        //   this.renderMenu();
-        // }
         getData() {
             return store_1.pagesObject.data;
         }
@@ -308,6 +401,24 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             if (data)
                 store_1.pagesObject.data = data;
             this.renderMenu(true);
+            this.resetForm();
+        }
+        async handleFormConfirm() {
+            const page = store_1.pagesObject.getPage(this.editingPageUuid);
+            const formData = await this.formEdit.getFormData();
+            // check url
+            const isURLExist = store_1.pagesObject.getPageByURL(formData.url, [this.editingPageUuid]);
+            if (isURLExist) {
+                // show caution
+                console.log("This url exists");
+            }
+            else {
+                // assign name and url
+                page.name = formData.name;
+                page.show = formData.show;
+                page.url = formData.url;
+                this.mdEdit.visible = false;
+            }
         }
         initEventBus() { }
         initEventListener() {
@@ -352,6 +463,12 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 }
             });
         }
+        resetForm() {
+            this.formEdit.jsonSchema = this._jsonSchema;
+            this.formEdit.uiSchema = this._uiSchema;
+            this.formEdit.formOptions = this._formOptions;
+            this.formEdit.renderForm();
+        }
         initMenuCardEventListener(card) {
             card.addEventListener('mouseenter', (event) => {
                 if (this.isEditing || this._mode == "viewer")
@@ -379,7 +496,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             }
         }
         getActiveDropLineUuid() {
-            const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
+            const dropLines = this.pnlMenu.querySelectorAll('[id^="menuDropLine"]');
             for (let i = 0; i < dropLines.length; i++) {
                 if (dropLines[i].classList.contains('active-drop-line')) {
                     return dropLines[i].id.replace('menuDropLine-', '');
@@ -439,7 +556,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.renderMenu();
         }
         setActiveDropLine(uuid) {
-            const dropLines = document.querySelectorAll('[id^="menuDropLine"]');
+            const dropLines = this.pnlMenu.querySelectorAll('[id^="menuDropLine"]');
             for (const dropLine of dropLines) {
                 dropLine.classList.remove('active-drop-line');
                 dropLine.classList.remove('inactive-drop-line');
@@ -525,10 +642,40 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         renderDropLine(uuid) {
             return this.$render("i-panel", { id: `menuDropLine-${uuid}`, width: '100%', height: '5px' });
         }
+        getHierarchyIndex(menu, targetUuid, currentPath = []) {
+            for (let i = 0; i < menu.length; i++) {
+                const page = menu[i];
+                const newPath = [...currentPath, `${i + 1}`];
+                if (page.uuid === targetUuid) {
+                    return newPath.join('-');
+                }
+                if (page.pages) {
+                    const nestedIndex = this.getHierarchyIndex(page.pages, targetUuid, newPath);
+                    if (nestedIndex) {
+                        return nestedIndex;
+                    }
+                }
+            }
+            return null;
+        }
         onClickAddChildBtn(parentUuid) {
+            console.log("onClickAddChildBtn");
+            const parent = store_1.pagesObject.getPage(parentUuid);
+            let newURL;
+            if (parent) {
+                const parentChildrenNumber = parent.pages ? parent.pages.length : 0;
+                const parentHierarchy = this.getHierarchyIndex(store_1.pagesObject.data.pages, parentUuid);
+                newURL = `page-${parentHierarchy}-${parentChildrenNumber + 1}`;
+            }
+            else {
+                newURL = `page-${store_1.pagesObject.data.pages.length + 1}`;
+            }
+            const newUUID = (0, utils_1.generateUUID)();
             store_1.pagesObject.addPage({
-                uuid: (0, utils_1.generateUUID)(),
+                uuid: newUUID,
                 name: 'Untitled page',
+                url: newURL,
+                show: true
             }, parentUuid);
             this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
@@ -538,8 +685,9 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 return;
             const page = store_1.pagesObject.getPage(uuid);
             const currPage = store_1.pagesObject.getPage(this._activePageUuid);
-            this._activePageUuid = uuid;
-            if (this.onChanged)
+            if (page.show === true)
+                this._activePageUuid = uuid;
+            if (this.onChanged && page.show === true)
                 this.onChanged(page, currPage);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
@@ -559,8 +707,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                     this.$render("i-label", { id: "cardTitle", caption: page.name, font: { size: '16px', color: '#3b3838', weight: 530 }, padding: { top: 8, bottom: 8, left: 8, right: 8 }, maxHeight: 34, class: isActive ? "focused-card" : "", overflow: "hidden" }),
                     this.$render("i-input", { id: "cardInput", visible: false, width: '90%', height: '40px', padding: { left: '0.5rem', top: '0.5rem', bottom: '0.5rem', right: '0.5rem' } })),
                 this.$render("i-hstack", { id: "actionBtnStack", verticalAlignment: "center", visible: false },
+                    this.$render("i-icon", { id: "cardEditBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Edit", placement: "top" }, onClick: () => this.onClickEditBtn(uuid) }),
                     this.$render("i-icon", { id: "cardAddChildBtn", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(uuid) }),
-                    this.$render("i-icon", { id: "cardRenameBtn", name: 'pen', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Rename", placement: "top" }, onClick: () => this.onClickRenameBtn(uuid) }),
                     this.$render("i-icon", { id: "cardRemoveBtn", name: 'trash', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Remove", placement: "top" }, onClick: () => this.onClickRemoveBtn(uuid) })),
                 this.$render("i-hstack", { id: "editBtnStack", verticalAlignment: "center", visible: false },
                     this.$render("i-icon", { name: 'times', width: 28, height: 28, fill: 'var(--colors-primary-main)', padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Cancel", placement: "top" }, onClick: () => this.onClickCancelBtn(uuid) }),
@@ -601,6 +749,18 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         onClickRenameBtn(uuid) {
             this.toggleEditor(uuid, true);
         }
+        onClickEditBtn(uuid) {
+            const page = store_1.pagesObject.getPage(uuid);
+            if (!page)
+                return;
+            this.editingPageUuid = uuid;
+            this.formEdit.setFormData({
+                name: page.name,
+                url: page.url,
+                show: page.show
+            });
+            this.mdEdit.visible = true;
+        }
         onClickConfirmBtn(uuid) {
             this.setCardTitle(uuid);
             this.toggleEditor(uuid, false);
@@ -632,7 +792,9 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                     this.$render("i-label", { caption: "Pages menu", font: { color: 'var(--colors-primary-main)', weight: 750, size: '18px' }, class: "prevent-select" }),
                     this.$render("i-icon", { id: "btnAddRootPage", name: 'plus', fill: 'var(--colors-primary-main)', width: 28, height: 28, padding: { top: 7, bottom: 7, left: 7, right: 7 }, margin: { right: 4 }, class: `pointer ${index_css_1.iconButtonStyle}`, tooltip: { content: "Add page", placement: "top" }, onClick: () => this.onClickAddChildBtn(null) })),
                 this.$render("i-vstack", { id: "pnlMenuWrapper", width: "100%" },
-                    this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle }))));
+                    this.$render("i-vstack", { id: 'pnlMenu', class: index_css_1.menuStyle })),
+                this.$render("i-modal", { id: "mdEdit", class: index_css_1.modalStyle, maxWidth: "400px", padding: { left: '1.5rem', right: '1.5rem', top: '1.5rem', bottom: '1.5rem', } },
+                    this.$render("i-form", { id: 'formEdit' }))));
         }
     };
     ScomPagesMenu = __decorate([

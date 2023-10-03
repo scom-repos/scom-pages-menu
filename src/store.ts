@@ -46,13 +46,14 @@ export class PagesObject {
         uuid: string,
         newName?: string,
         newCid?: string,
+        newShow?: boolean,
         newPages?: IPagesMenuItem[],
         currentPage?: IPagesMenuItem
     ): boolean {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (const page of this._data.pages) {
-                if (this.setPage(uuid, newName, newCid, newPages, page)) {
+                if (this.setPage(uuid, newName, newCid, newShow, newPages, page)) {
                     return true; // Page found and updated
                 }
             }
@@ -61,6 +62,9 @@ export class PagesObject {
             if (currentPage.uuid === uuid) {
                 if (newName !== undefined) {
                     currentPage.name = newName;
+                }
+                if (newShow !== undefined) {
+                    currentPage.show = newShow;
                 }
                 if (newPages !== undefined) {
                     currentPage.pages = newPages;
@@ -71,7 +75,7 @@ export class PagesObject {
             // If the current page has sub-pages, search within them
             if (currentPage.pages) {
                 for (const subPage of currentPage.pages) {
-                    if (this.setPage(uuid, newName, newCid, newPages, subPage)) {
+                    if (this.setPage(uuid, newName, newCid, newShow, newPages, subPage)) {
                         return true; // Page found and updated
                     }
                 }
@@ -143,6 +147,29 @@ export class PagesObject {
         return false; // Page not found
     }
 
+    getPageByURL(url: string, excludedUUID: string[], currentPage?: IPagesMenuItem): IPagesMenuItem | undefined {
+        if (!currentPage) {
+            // Start the search from the top-level menu
+            for (const page of this._data.pages) {
+                const result = this.getPageByURL(url, excludedUUID, page);
+                if (result) return result;
+            }
+        } else {
+            // Check if the current page matches the ID
+            if (currentPage.url && currentPage.url === url && !excludedUUID.includes(currentPage.uuid)) {
+                return currentPage;
+            }
+            // If the current page has sub-pages, search within them
+            if (currentPage.pages) {
+                for (const subPage of currentPage.pages) {
+                    const result = this.getPageByURL(url, excludedUUID, subPage);
+                    if (result) return result;
+                }
+            }
+        }
+
+        return undefined; // Page not found
+    }
 
     getParent(uuid: string): IPagesMenuItem {
         for (const page of this._data.pages) {

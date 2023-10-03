@@ -10,6 +10,8 @@ declare module "@scom/scom-pages-menu/interface.ts" {
     export interface IPagesMenuItem {
         uuid: string;
         name: string;
+        url: string;
+        show: boolean;
         pages?: IPagesMenuItem[];
     }
     export interface IPagesMenu {
@@ -24,9 +26,10 @@ declare module "@scom/scom-pages-menu/store.ts" {
         get data(): IPagesMenu;
         set data(value: IPagesMenu);
         getPage(uuid: string, currentPage?: IPagesMenuItem): IPagesMenuItem | undefined;
-        setPage(uuid: string, newName?: string, newCid?: string, newPages?: IPagesMenuItem[], currentPage?: IPagesMenuItem): boolean;
+        setPage(uuid: string, newName?: string, newCid?: string, newShow?: boolean, newPages?: IPagesMenuItem[], currentPage?: IPagesMenuItem): boolean;
         addPage(newPage: IPagesMenuItem, parentId?: string, index?: number): boolean;
         deletePage(uuid: string, currentPage?: IPagesMenuItem, parent?: IPagesMenuItem): boolean;
+        getPageByURL(url: string, excludedUUID: string[], currentPage?: IPagesMenuItem): IPagesMenuItem | undefined;
         getParent(uuid: string): IPagesMenuItem;
         private findParent;
     }
@@ -64,8 +67,14 @@ declare module "@scom/scom-pages-menu" {
         private isEditing;
         private focusedPageId;
         private _activePageUuid;
+        private editingPageUuid;
         private _mode;
         private btnAddRootPage;
+        private mdEdit;
+        private formEdit;
+        private _jsonSchema;
+        private _uiSchema;
+        private _formOptions;
         static create(options?: ScomPagesMenuElement, parent?: Container): Promise<ScomPagesMenu>;
         constructor(parent?: Container, options?: ScomPagesMenuElement);
         getData(): IPagesMenu;
@@ -76,8 +85,10 @@ declare module "@scom/scom-pages-menu" {
         set activePageUuid(value: string);
         private noDataTxt;
         init(): void;
+        private handleFormConfirm;
         private initEventBus;
         private initEventListener;
+        private resetForm;
         private initMenuCardEventListener;
         private setfocusCard;
         private getActiveDropLineUuid;
@@ -88,6 +99,7 @@ declare module "@scom/scom-pages-menu" {
         private removeChildren;
         renderMenu(firstHierarichyExpand?: boolean): void;
         private renderDropLine;
+        getHierarchyIndex(menu: IPagesMenuItem[], targetUuid: string, currentPath?: string[]): string | null;
         private onClickAddChildBtn;
         private onClickMenuCard;
         private renderMenuCard;
@@ -95,6 +107,7 @@ declare module "@scom/scom-pages-menu" {
         private setCardTitle;
         private onClickRemoveBtn;
         private onClickRenameBtn;
+        private onClickEditBtn;
         private onClickConfirmBtn;
         private onClickCancelBtn;
         private toggleRenameBtn;
