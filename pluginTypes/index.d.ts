@@ -96,7 +96,6 @@ declare module "@scom/scom-pages-menu" {
         private reorderPage;
         private setActiveDropLine;
         private renderChildren;
-        private removeChildren;
         renderMenu(firstHierarichyExpand?: boolean): void;
         private renderDropLine;
         getHierarchyIndex(menu: IPagesMenuItem[], targetUuid: string, currentPath?: string[]): string | null;
@@ -108,7 +107,6 @@ declare module "@scom/scom-pages-menu" {
         private onClickRemoveBtn;
         private onClickRenameBtn;
         private onClickEditBtn;
-        private onClickConfirmBtn;
         private onClickCancelBtn;
         private toggleRenameBtn;
         private toggleEditor;

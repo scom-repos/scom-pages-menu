@@ -11,6 +11,7 @@ export const data = {
             uuid: 'uuid-2',
             name: "page 2",
             url: "uuid-2",
+            show: true,
             pages: [
                 {
                     uuid: 'uuid-2.1',
@@ -23,6 +24,7 @@ export const data = {
                     uuid: 'uuid-2.2',
                     name: "page 2.2",
                     url: "uuid-2-2",
+                    show: true,
                     pages: [
                         {
                             uuid: 'uuid-2.2.1',

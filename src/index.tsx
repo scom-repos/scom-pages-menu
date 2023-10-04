@@ -187,9 +187,15 @@ export default class ScomPagesMenu extends Module {
   private async handleFormConfirm() {
     const page = pagesObject.getPage(this.editingPageUuid);
     const formData = await this.formEdit.getFormData();
+    const decodedURL = decodeURIComponent(formData.url);
+    const encodedURL = encodeURIComponent(decodedURL);
+
+    this.formEdit.setFormData({
+      url: encodedURL
+    });
 
     // check url
-    const isURLExist = pagesObject.getPageByURL(formData.url, [this.editingPageUuid]);
+    const isURLExist = pagesObject.getPageByURL(encodedURL, [this.editingPageUuid]);
     if (isURLExist) {
       // show caution
       console.log("This url exists")
@@ -197,7 +203,7 @@ export default class ScomPagesMenu extends Module {
       // assign name and url
       page.name = formData.name;
       page.show = formData.show;
-      page.url = formData.url;
+      page.url = encodedURL;
       this.mdEdit.visible = false;
     }
   }
@@ -373,15 +379,15 @@ export default class ScomPagesMenu extends Module {
     }
   }
 
-  private removeChildren(parentUUid: string) {
-    const childElms = this.pnlMenu.querySelectorAll(`[parentuuid="${parentUUid}"]`);
-    if (this.expandedMenuItem.includes(parentUUid)) this.expandedMenuItem.push(parentUUid);
-    for (const childElm of childElms) {
-      const grandChildElmExist = this.pnlMenu.querySelector(`[parentuuid="${childElm.querySelector('#menuCard').getAttribute('uuid')}"]`);
-      if (grandChildElmExist) this.removeChildren(childElm.querySelector('#menuCard').getAttribute('uuid'));
-      childElm.remove();
-    }
-  }
+  // private removeChildren(parentUUid: string) {
+  //   const childElms = this.pnlMenu.querySelectorAll(`[parentuuid="${parentUUid}"]`);
+  //   if (this.expandedMenuItem.includes(parentUUid)) this.expandedMenuItem.push(parentUUid);
+  //   for (const childElm of childElms) {
+  //     const grandChildElmExist = this.pnlMenu.querySelector(`[parentuuid="${childElm.querySelector('#menuCard').getAttribute('uuid')}"]`);
+  //     if (grandChildElmExist) this.removeChildren(childElm.querySelector('#menuCard').getAttribute('uuid'));
+  //     childElm.remove();
+  //   }
+  // }
 
   renderMenu(firstHierarichyExpand: boolean = false) {
     this.pnlMenu.clearInnerHTML();
@@ -576,7 +582,7 @@ export default class ScomPagesMenu extends Module {
             onClick={() => this.onClickRemoveBtn(uuid)}
           ></i-icon>
         </i-hstack>
-        <i-hstack id="editBtnStack" verticalAlignment="center" visible={false}>
+        {/* <i-hstack id="editBtnStack" verticalAlignment="center" visible={false}>
           <i-icon
             name='times'
             width={28} height={28}
@@ -597,7 +603,7 @@ export default class ScomPagesMenu extends Module {
             tooltip={{ content: "Confirm", placement: "top" }}
             onClick={() => this.onClickConfirmBtn(uuid)}
           ></i-icon>
-        </i-hstack>
+        </i-hstack> */}
       </i-hstack>
     );
     menuCard.setAttribute('uuid', uuid);
@@ -658,10 +664,10 @@ export default class ScomPagesMenu extends Module {
     this.mdEdit.visible = true;
   }
 
-  private onClickConfirmBtn(uuid: string) {
-    this.setCardTitle(uuid);
-    this.toggleEditor(uuid, false);
-  }
+  // private onClickConfirmBtn(uuid: string) {
+  //   this.setCardTitle(uuid);
+  //   this.toggleEditor(uuid, false);
+  // }
 
   private onClickCancelBtn(uuid: string) {
     this.toggleEditor(uuid, false);
