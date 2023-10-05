@@ -45,6 +45,7 @@ export class PagesObject {
     setPage(
         uuid: string,
         newName?: string,
+        newURL?: string,
         newCid?: string,
         newPages?: IPagesMenuItem[],
         currentPage?: IPagesMenuItem
@@ -52,7 +53,7 @@ export class PagesObject {
         if (!currentPage) {
             // Start the search from the top-level menu
             for (const page of this._data.pages) {
-                if (this.setPage(uuid, newName, newCid, newPages, page)) {
+                if (this.setPage(uuid, newName, newURL, newCid, newPages, page)) {
                     return true; // Page found and updated
                 }
             }
@@ -61,6 +62,9 @@ export class PagesObject {
             if (currentPage.uuid === uuid) {
                 if (newName !== undefined) {
                     currentPage.name = newName;
+                }
+                if (newURL !== undefined) {
+                    currentPage.url = newURL;
                 }
                 if (newPages !== undefined) {
                     currentPage.pages = newPages;
@@ -71,7 +75,7 @@ export class PagesObject {
             // If the current page has sub-pages, search within them
             if (currentPage.pages) {
                 for (const subPage of currentPage.pages) {
-                    if (this.setPage(uuid, newName, newCid, newPages, subPage)) {
+                    if (this.setPage(uuid, newName, newURL, newCid, newPages, subPage)) {
                         return true; // Page found and updated
                     }
                 }

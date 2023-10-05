@@ -343,6 +343,7 @@ export default class ScomPagesMenu extends Module {
     pagesObject.addPage({
       uuid: generateUUID(),
       name: 'Untitled page',
+      url: 'untitled-page'
     }, parentUuid)
     this.expandedMenuItem.push(parentUuid);
     this.renderMenu();
@@ -489,13 +490,24 @@ export default class ScomPagesMenu extends Module {
     }
   }
 
-  private setCardTitle(uuid: string) {
+  convertToUrl(inputString: string): string {
+    // Replace invalid characters with hyphens using a regular expression
+    const urlSafeString = inputString.replace(/[^a-zA-Z0-9-]/g, '-');
+
+    // Encode the string to make it URL-safe
+    const encodedUrl = encodeURIComponent(urlSafeString);
+
+    return encodedUrl;
+  }
+
+  private setCardData(uuid: string) {
     const currCard = this.pnlMenu.querySelector(`[uuid="${uuid}"]`) as HTMLElement;
     const cardInput = currCard.querySelector('#cardInput') as Input;
     const caption = cardInput.value;
 
+    const url = this.convertToUrl(caption);
     // change data
-    pagesObject.setPage(uuid, caption);
+    pagesObject.setPage(uuid, caption, url);
 
     // change UI on-the-fly
     const cardTitle = currCard.querySelector('#cardTitle');
@@ -512,7 +524,7 @@ export default class ScomPagesMenu extends Module {
   }
 
   private onClickConfirmBtn(uuid: string) {
-    this.setCardTitle(uuid);
+    this.setCardData(uuid);
     this.toggleEditor(uuid, false);
   }
 

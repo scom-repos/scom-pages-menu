@@ -114,11 +114,11 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
             }
             return undefined; // Page not found
         }
-        setPage(uuid, newName, newCid, newPages, currentPage) {
+        setPage(uuid, newName, newURL, newCid, newPages, currentPage) {
             if (!currentPage) {
                 // Start the search from the top-level menu
                 for (const page of this._data.pages) {
-                    if (this.setPage(uuid, newName, newCid, newPages, page)) {
+                    if (this.setPage(uuid, newName, newURL, newCid, newPages, page)) {
                         return true; // Page found and updated
                     }
                 }
@@ -129,6 +129,9 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                     if (newName !== undefined) {
                         currentPage.name = newName;
                     }
+                    if (newURL !== undefined) {
+                        currentPage.url = newURL;
+                    }
                     if (newPages !== undefined) {
                         currentPage.pages = newPages;
                     }
@@ -137,7 +140,7 @@ define("@scom/scom-pages-menu/store.ts", ["require", "exports"], function (requi
                 // If the current page has sub-pages, search within them
                 if (currentPage.pages) {
                     for (const subPage of currentPage.pages) {
-                        if (this.setPage(uuid, newName, newCid, newPages, subPage)) {
+                        if (this.setPage(uuid, newName, newURL, newCid, newPages, subPage)) {
                             return true; // Page found and updated
                         }
                     }
@@ -529,6 +532,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             store_1.pagesObject.addPage({
                 uuid: (0, utils_1.generateUUID)(),
                 name: 'Untitled page',
+                url: 'untitled-page'
             }, parentUuid);
             this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
@@ -584,12 +588,20 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
                 this.expandedMenuItem.push(uuid);
             }
         }
-        setCardTitle(uuid) {
+        convertToUrl(inputString) {
+            // Replace invalid characters with hyphens using a regular expression
+            const urlSafeString = inputString.replace(/[^a-zA-Z0-9-]/g, '-');
+            // Encode the string to make it URL-safe
+            const encodedUrl = encodeURIComponent(urlSafeString);
+            return encodedUrl;
+        }
+        setCardData(uuid) {
             const currCard = this.pnlMenu.querySelector(`[uuid="${uuid}"]`);
             const cardInput = currCard.querySelector('#cardInput');
             const caption = cardInput.value;
+            const url = this.convertToUrl(caption);
             // change data
-            store_1.pagesObject.setPage(uuid, caption);
+            store_1.pagesObject.setPage(uuid, caption, url);
             // change UI on-the-fly
             const cardTitle = currCard.querySelector('#cardTitle');
             cardTitle.caption = caption;
@@ -602,7 +614,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this.toggleEditor(uuid, true);
         }
         onClickConfirmBtn(uuid) {
-            this.setCardTitle(uuid);
+            this.setCardData(uuid);
             this.toggleEditor(uuid, false);
         }
         onClickCancelBtn(uuid) {

@@ -10,6 +10,7 @@ declare module "@scom/scom-pages-menu/interface.ts" {
     export interface IPagesMenuItem {
         uuid: string;
         name: string;
+        url: string;
         pages?: IPagesMenuItem[];
     }
     export interface IPagesMenu {
@@ -24,7 +25,7 @@ declare module "@scom/scom-pages-menu/store.ts" {
         get data(): IPagesMenu;
         set data(value: IPagesMenu);
         getPage(uuid: string, currentPage?: IPagesMenuItem): IPagesMenuItem | undefined;
-        setPage(uuid: string, newName?: string, newCid?: string, newPages?: IPagesMenuItem[], currentPage?: IPagesMenuItem): boolean;
+        setPage(uuid: string, newName?: string, newURL?: string, newCid?: string, newPages?: IPagesMenuItem[], currentPage?: IPagesMenuItem): boolean;
         addPage(newPage: IPagesMenuItem, parentId?: string, index?: number): boolean;
         deletePage(uuid: string, currentPage?: IPagesMenuItem, parent?: IPagesMenuItem): boolean;
         getParent(uuid: string): IPagesMenuItem;
@@ -92,7 +93,8 @@ declare module "@scom/scom-pages-menu" {
         private onClickMenuCard;
         private renderMenuCard;
         private changeChildrenVisibility;
-        private setCardTitle;
+        convertToUrl(inputString: string): string;
+        private setCardData;
         private onClickRemoveBtn;
         private onClickRenameBtn;
         private onClickConfirmBtn;

@@ -26,7 +26,7 @@ export default class Module1 extends Module {
         return <i-panel>
 
             <i-scom-pages-menu id="menu" width="300px"
-                display={'block'} mode={'viewer'}
+                display={'block'} mode={'editor'}
                 onChanged={this.testFunction}></i-scom-pages-menu>
 
         </i-panel>
