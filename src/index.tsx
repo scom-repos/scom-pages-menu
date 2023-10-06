@@ -21,6 +21,8 @@ const Theme = Styles.Theme.ThemeVars;
 
 type OnChanged = (newPage: IPagesMenuItem, oldPage: IPagesMenuItem) => void;
 type OnRenamed = (page: IPagesMenuItem) => void;
+type OnDeletedPage = (page: IPagesMenuItem) => void;
+type OnAddedPage = (page: IPagesMenuItem) => void;
 type MenuMode = 'editor' | 'viewer';
 
 interface ScomPagesMenuElement extends ControlElement {
@@ -28,7 +30,9 @@ interface ScomPagesMenuElement extends ControlElement {
   activePageUuid?: string,
   mode?: MenuMode,
   onChanged: OnChanged,
-  onRenamed?: OnRenamed
+  onRenamed?: OnRenamed,
+  onDeletedPage?: OnDeletedPage,
+  onAddedPage?: OnAddedPage
 }
 
 declare global {
@@ -44,6 +48,8 @@ declare global {
 export default class ScomPagesMenu extends Module {
   private onChanged: OnChanged;
   private onRenamed: OnRenamed;
+  private onDeletedPage: OnDeletedPage;
+  private onAddedPage: OnAddedPage;
   private expandedMenuItem: string[] = [];
   private pnlMenu: VStack;
   private draggingPageUUid: string;
@@ -109,6 +115,8 @@ export default class ScomPagesMenu extends Module {
     this._mode = this.getAttribute('mode', true) || 'editor';
     this.onChanged = this.getAttribute('onChanged', true);
     this.onRenamed = this.getAttribute('onRenamed', true);
+    this.onDeletedPage = this.getAttribute('onDeletedPage', true);
+    this.onAddedPage = this.getAttribute('onAddedPage', true);
     if (data) pagesObject.data = data;
     this.renderMenu(true);
   }
@@ -344,13 +352,15 @@ export default class ScomPagesMenu extends Module {
   }
 
   private onClickAddChildBtn(parentUuid: string) {
-    pagesObject.addPage({
+    const newPage = {
       uuid: generateUUID(),
       name: 'Untitled page',
       url: 'untitled-page'
-    }, parentUuid)
+    }
+    pagesObject.addPage(newPage, parentUuid)
     this.expandedMenuItem.push(parentUuid);
     this.renderMenu();
+    if (this.onAddedPage) this.onAddedPage(newPage);
   }
 
   private onClickMenuCard(uuid: string) {
@@ -358,9 +368,9 @@ export default class ScomPagesMenu extends Module {
     const page = pagesObject.getPage(uuid);
     const currPage = pagesObject.getPage(this._activePageUuid);
     this._activePageUuid = uuid;
-    if (this.onChanged) this.onChanged(page, currPage);
     if (page.pages) this.changeChildrenVisibility(uuid);
     this.renderMenu();
+    if (this.onChanged) this.onChanged(page, currPage);
   }
 
   private renderMenuCard(uuid: string, level: number) {
@@ -519,8 +529,10 @@ export default class ScomPagesMenu extends Module {
   }
 
   private onClickRemoveBtn(uuid: string) {
+    const page = pagesObject.getPage(uuid);
     pagesObject.deletePage(uuid);
     this.renderMenu();
+    if (this.onDeletedPage) this.onDeletedPage(page);
   }
 
   private onClickRenameBtn(uuid: string) {

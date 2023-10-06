@@ -44,6 +44,8 @@ declare module "@scom/scom-pages-menu" {
     export { IPagesMenu, IPagesMenuItem } from "@scom/scom-pages-menu/interface.ts";
     type OnChanged = (newPage: IPagesMenuItem, oldPage: IPagesMenuItem) => void;
     type OnRenamed = (page: IPagesMenuItem) => void;
+    type OnDeletedPage = (page: IPagesMenuItem) => void;
+    type OnAddedPage = (page: IPagesMenuItem) => void;
     type MenuMode = 'editor' | 'viewer';
     interface ScomPagesMenuElement extends ControlElement {
         data?: IPagesMenu;
@@ -51,6 +53,8 @@ declare module "@scom/scom-pages-menu" {
         mode?: MenuMode;
         onChanged: OnChanged;
         onRenamed?: OnRenamed;
+        onDeletedPage?: OnDeletedPage;
+        onAddedPage?: OnAddedPage;
     }
     global {
         namespace JSX {
@@ -62,6 +66,8 @@ declare module "@scom/scom-pages-menu" {
     export default class ScomPagesMenu extends Module {
         private onChanged;
         private onRenamed;
+        private onDeletedPage;
+        private onAddedPage;
         private expandedMenuItem;
         private pnlMenu;
         private draggingPageUUid;

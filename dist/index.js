@@ -309,6 +309,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this._mode = this.getAttribute('mode', true) || 'editor';
             this.onChanged = this.getAttribute('onChanged', true);
             this.onRenamed = this.getAttribute('onRenamed', true);
+            this.onDeletedPage = this.getAttribute('onDeletedPage', true);
+            this.onAddedPage = this.getAttribute('onAddedPage', true);
             if (data)
                 store_1.pagesObject.data = data;
             this.renderMenu(true);
@@ -530,13 +532,16 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             return this.$render("i-panel", { id: `menuDropLine-${uuid}`, width: '100%', height: '5px' });
         }
         onClickAddChildBtn(parentUuid) {
-            store_1.pagesObject.addPage({
+            const newPage = {
                 uuid: (0, utils_1.generateUUID)(),
                 name: 'Untitled page',
                 url: 'untitled-page'
-            }, parentUuid);
+            };
+            store_1.pagesObject.addPage(newPage, parentUuid);
             this.expandedMenuItem.push(parentUuid);
             this.renderMenu();
+            if (this.onAddedPage)
+                this.onAddedPage(newPage);
         }
         onClickMenuCard(uuid) {
             if (this.isEditing)
@@ -544,11 +549,11 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             const page = store_1.pagesObject.getPage(uuid);
             const currPage = store_1.pagesObject.getPage(this._activePageUuid);
             this._activePageUuid = uuid;
-            if (this.onChanged)
-                this.onChanged(page, currPage);
             if (page.pages)
                 this.changeChildrenVisibility(uuid);
             this.renderMenu();
+            if (this.onChanged)
+                this.onChanged(page, currPage);
         }
         renderMenuCard(uuid, level) {
             const page = store_1.pagesObject.getPage(uuid);
@@ -608,8 +613,11 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             cardTitle.caption = caption;
         }
         onClickRemoveBtn(uuid) {
+            const page = store_1.pagesObject.getPage(uuid);
             store_1.pagesObject.deletePage(uuid);
             this.renderMenu();
+            if (this.onDeletedPage)
+                this.onDeletedPage(page);
         }
         onClickRenameBtn(uuid) {
             this.toggleEditor(uuid, true);

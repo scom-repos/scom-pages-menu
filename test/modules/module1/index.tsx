@@ -27,6 +27,16 @@ export default class Module1 extends Module {
         console.log("page", page)
     }
 
+    testOnAddedPageFunction(page: any) {
+        console.log("testOnAddedPageFunction")
+        console.log("page", page)
+    }
+
+    testOnDeletedPageFunction(page: any) {
+        console.log("testOnDeletedPageFunction")
+        console.log("page", page)
+    }
+
     render() {
         return <i-panel>
 
@@ -34,6 +44,8 @@ export default class Module1 extends Module {
                 display={'block'} mode={'editor'}
                 onChanged={this.testOnChangedFunction}
                 onRenamed={this.testOnRenamedFunction}
+                onAddedPage={this.testOnAddedPageFunction}
+                onDeletedPage={this.testOnDeletedPageFunction}
             ></i-scom-pages-menu>
         </i-panel>
     }
