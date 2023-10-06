@@ -16,10 +16,15 @@ export default class Module1 extends Module {
         this.menu.setData(data);
     }
 
-    testFunction(newPage: any, oldPage: any) {
+    testOnChangedFunction(newPage: any, oldPage: any) {
+        console.log("testOnChangedFunction")
         console.log("newPage", newPage)
         console.log("oldPage", oldPage)
-        console.log("data", this.menu.getData())
+    }
+
+    testOnRenamedFunction(page: any) {
+        console.log("testOnRenamedFunction")
+        console.log("page", page)
     }
 
     render() {
@@ -27,8 +32,9 @@ export default class Module1 extends Module {
 
             <i-scom-pages-menu id="menu" width="300px"
                 display={'block'} mode={'editor'}
-                onChanged={this.testFunction}></i-scom-pages-menu>
-
+                onChanged={this.testOnChangedFunction}
+                onRenamed={this.testOnRenamedFunction}
+            ></i-scom-pages-menu>
         </i-panel>
     }
 }

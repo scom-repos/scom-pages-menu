@@ -308,6 +308,7 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
             this._activePageUuid = this.getAttribute('activePageUuid', true);
             this._mode = this.getAttribute('mode', true) || 'editor';
             this.onChanged = this.getAttribute('onChanged', true);
+            this.onRenamed = this.getAttribute('onRenamed', true);
             if (data)
                 store_1.pagesObject.data = data;
             this.renderMenu(true);
@@ -616,6 +617,8 @@ define("@scom/scom-pages-menu", ["require", "exports", "@ijstech/components", "@
         onClickConfirmBtn(uuid) {
             this.setCardData(uuid);
             this.toggleEditor(uuid, false);
+            if (this.onRenamed)
+                this.onRenamed(store_1.pagesObject.getPage(uuid));
         }
         onClickCancelBtn(uuid) {
             this.toggleEditor(uuid, false);

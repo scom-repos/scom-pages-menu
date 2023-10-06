@@ -20,13 +20,15 @@ import { generateUUID } from './utils'
 const Theme = Styles.Theme.ThemeVars;
 
 type OnChanged = (newPage: IPagesMenuItem, oldPage: IPagesMenuItem) => void;
+type OnRenamed = (page: IPagesMenuItem) => void;
 type MenuMode = 'editor' | 'viewer';
 
 interface ScomPagesMenuElement extends ControlElement {
   data?: IPagesMenu,
   activePageUuid?: string,
   mode?: MenuMode,
-  onChanged: OnChanged
+  onChanged: OnChanged,
+  onRenamed?: OnRenamed
 }
 
 declare global {
@@ -41,6 +43,7 @@ declare global {
 @customElements('i-scom-pages-menu')
 export default class ScomPagesMenu extends Module {
   private onChanged: OnChanged;
+  private onRenamed: OnRenamed;
   private expandedMenuItem: string[] = [];
   private pnlMenu: VStack;
   private draggingPageUUid: string;
@@ -105,6 +108,7 @@ export default class ScomPagesMenu extends Module {
     this._activePageUuid = this.getAttribute('activePageUuid', true);
     this._mode = this.getAttribute('mode', true) || 'editor';
     this.onChanged = this.getAttribute('onChanged', true);
+    this.onRenamed = this.getAttribute('onRenamed', true);
     if (data) pagesObject.data = data;
     this.renderMenu(true);
   }
@@ -526,6 +530,7 @@ export default class ScomPagesMenu extends Module {
   private onClickConfirmBtn(uuid: string) {
     this.setCardData(uuid);
     this.toggleEditor(uuid, false);
+    if (this.onRenamed) this.onRenamed(pagesObject.getPage(uuid));
   }
 
   private onClickCancelBtn(uuid: string) {
